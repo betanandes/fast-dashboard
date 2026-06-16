@@ -4,9 +4,10 @@ import { useAuth } from "./hooks/useAuth";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import ImportarPage from "./pages/ImportarPage";
+import VencimentosPage from "./pages/VencimentosPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
-import ImportarPage from "./pages/ImportarPage";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -18,21 +19,11 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Pública */}
           <Route path="/login" element={<LoginPage />} />
-
-          {/* Protegidas */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route
-                path="/vencimentos"
-                element={
-                  <div className="p-8 text-sm text-gray-500">
-                    Sprint 2 — Vencimentos
-                  </div>
-                }
-              />
+              <Route path="/vencimentos" element={<VencimentosPage />} />
               <Route
                 path="/fornecedores"
                 element={
@@ -44,7 +35,6 @@ export default function App() {
               <Route path="/importar" element={<ImportarPage />} />
             </Route>
           </Route>
-
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

@@ -188,3 +188,28 @@ export async function buscarVencimentosProximos() {
   if (error) throw error;
   return data ?? [];
 }
+
+// ----------------------------------------------------------------
+// Marcar pagamento como pago
+// ----------------------------------------------------------------
+export async function marcarComoPago(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("pagamentos") as any)
+    .update({ status: "pago" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// ----------------------------------------------------------------
+// Marcar pagamento como a_vencer (desfazer pagamento)
+// ----------------------------------------------------------------
+export async function desfazerPagamento(id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from("pagamentos") as any)
+    .update({ status: "a_vencer" })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// fix: força tipo any para contornar inferência estrita do supabase-js
+// eslint-disable-next-line @typescript-eslint/no-explicit-any

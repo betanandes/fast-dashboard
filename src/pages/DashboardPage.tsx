@@ -18,6 +18,7 @@ import {
   FileText,
   Search,
   RefreshCw,
+  CheckCircle,
 } from "lucide-react";
 import KPICard from "../components/ui/KPICard";
 import Semaforo from "../components/ui/Semaforo";
@@ -28,6 +29,7 @@ import {
   buscarTopFornecedores,
   buscarPagamentos,
   buscarMesesDisponiveis,
+  marcarComoPago,
   type FiltrosPagamentos,
 } from "../services/dashboard";
 import type { Pagamento } from "../types/database";
@@ -83,6 +85,7 @@ export default function DashboardPage() {
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingTabela, setLoadingTabela] = useState(false);
+  const [pagando, setPagando] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -130,6 +133,20 @@ export default function DashboardPage() {
   const emDia = kpis
     ? kpis.total_lancamentos - kpis.count_vencidos - kpis.count_proximos7
     : 0;
+
+  async function handlePagar(id: string) {
+    setPagando(id);
+    try {
+      await marcarComoPago(id);
+      setPagamentos((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: "pago" } : p)),
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPagando(null);
+    }
+  }
 
   if (loading)
     return (
@@ -375,13 +392,16 @@ export default function DashboardPage() {
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">
                     Status
                   </th>
+                  <th className="px-4 py-2.5 text-xs font-medium text-gray-500">
+                    Ação
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {pagamentos.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center py-8 text-gray-400 text-sm"
                     >
                       Nenhum pagamento encontrado
@@ -412,6 +432,26 @@ export default function DashboardPage() {
                         {fmtMoedaCompleto(p.valor)}
                       </td>
                       <td className="px-4 py-2.5">{statusBadge(p.status)}</td>
+                      <td className="px-4 py-2.5">
+                        {p.status !== "pago" ? (
+                          <button
+                            onClick={() => handlePagar(p.id)}
+                            disabled={pagando === p.id}
+                            className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {pagando === p.id ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-3 h-3" />
+                            )}
+                            Pago
+                          </button>
+                        ) : (
+                          <span className="text-xs text-green-600 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" /> Pago
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}

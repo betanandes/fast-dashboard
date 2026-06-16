@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,4 +22,20 @@
   .card {
     @apply bg-white rounded-xl border border-gray-100 shadow-sm;
   }
+}
+
+.badge {
+  @apply inline-block text-xs font-medium px-2 py-0.5 rounded-full;
+}
+.badge-danger {
+  @apply bg-red-100 text-red-700;
+}
+.badge-warn {
+  @apply bg-amber-100 text-amber-700;
+}
+.badge-ok {
+  @apply bg-green-100 text-green-700;
+}
+.badge-info {
+  @apply bg-blue-100 text-blue-700;
 }

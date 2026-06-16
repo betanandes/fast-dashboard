@@ -6,6 +6,8 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ImportarPage from "./pages/ImportarPage";
 import VencimentosPage from "./pages/VencimentosPage";
+import FornecedoresPage from "./pages/FornecedoresPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -19,22 +21,20 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* Protegidas */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/vencimentos" element={<VencimentosPage />} />
-              <Route
-                path="/fornecedores"
-                element={
-                  <div className="p-8 text-sm text-gray-500">
-                    Sprint 4 — Fornecedores
-                  </div>
-                }
-              />
+              <Route path="/fornecedores" element={<FornecedoresPage />} />
               <Route path="/importar" element={<ImportarPage />} />
             </Route>
           </Route>
+
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

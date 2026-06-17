@@ -98,11 +98,30 @@ export async function buscarPorCategoria() {
     .slice(0, 6);
 }
 
-export async function buscarTopFornecedores() {
+export async function buscarTopFornecedores(limite = 8) {
   const { data, error } = (await supabase
     .from("top_fornecedores")
     .select("*")
-    .limit(8)) as {
+    .limit(limite)) as {
+    data:
+      | {
+          fornecedor: string;
+          total_valor: number;
+          percentual: number;
+          total_lancamentos: number;
+        }[]
+      | null;
+    error: unknown;
+  };
+
+  if (error || !data) throw error;
+  return data;
+}
+
+export async function buscarTodosFornecedores() {
+  const { data, error } = (await supabase
+    .from("top_fornecedores")
+    .select("*")) as {
     data:
       | {
           fornecedor: string;

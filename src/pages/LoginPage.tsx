@@ -71,7 +71,7 @@ export default function LoginPage() {
         tipo: "erro",
         texto: limite
           ? "Limite de tentativas atingido. Aguarde 60 minutos e tente novamente."
-          : "Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.",
+          : "ível enviar o e-mail. Verifique o endereço e tente novamente.",
       });
     } else {
       setResetMsg({

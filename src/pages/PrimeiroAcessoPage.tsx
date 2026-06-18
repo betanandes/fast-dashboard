@@ -57,7 +57,7 @@ export default function PrimeiroAcessoPage() {
     }
 
     setSucesso(true);
-    setTimeout(() => navigate("/dashboard"), 2000);
+    setTimeout(() => navigate("/login"), 2000);
   }
 
   return (
@@ -83,7 +83,7 @@ export default function PrimeiroAcessoPage() {
                 Senha criada com sucesso!
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                Redirecionando para o dashboard...
+                Redirecionando para o login...
               </p>
             </div>
           ) : (

@@ -45,7 +45,30 @@ export default function AppLayout() {
 
   const nomeExibido = perfil?.nome || user?.email?.split("@")[0] || "Usuário";
   const isAdmin = perfil?.role === "admin";
-  const iniciais = nomeExibido.slice(0, 2).toUpperCase();
+
+  // Iniciais: primeira letra do nome + primeira letra do sobrenome
+  function getIniciais(nome: string) {
+    const partes = nome.trim().split(/\s+/);
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+  }
+
+  // Cor do avatar baseada no nome — determinística (sempre a mesma para o mesmo usuário)
+  const CORES_AVATAR = [
+    { bg: "bg-blue-100", text: "text-blue-700" },
+    { bg: "bg-violet-100", text: "text-violet-700" },
+    { bg: "bg-emerald-100", text: "text-emerald-700" },
+    { bg: "bg-rose-100", text: "text-rose-700" },
+    { bg: "bg-amber-100", text: "text-amber-700" },
+    { bg: "bg-cyan-100", text: "text-cyan-700" },
+    { bg: "bg-pink-100", text: "text-pink-700" },
+    { bg: "bg-indigo-100", text: "text-indigo-700" },
+  ];
+  const corIdx =
+    nomeExibido.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) %
+    CORES_AVATAR.length;
+  const corAvatar = CORES_AVATAR[corIdx];
+  const iniciais = getIniciais(nomeExibido);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -142,8 +165,10 @@ export default function AppLayout() {
           <div
             className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${collapsed ? "justify-center" : ""}`}
           >
-            <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center shrink-0">
-              <span className="text-[10px] font-semibold text-brand-700">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${corAvatar.bg}`}
+            >
+              <span className={`text-[10px] font-semibold ${corAvatar.text}`}>
                 {iniciais}
               </span>
             </div>

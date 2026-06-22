@@ -9,9 +9,11 @@ import {
 } from "lucide-react";
 import { setupMfa, verifyMfa } from "../services/mfa";
 import { QRCodeSVG } from "qrcode.react";
+import { useAuthContext } from "../hooks/AuthContext";
 
 export default function MfaSetupPage() {
   const navigate = useNavigate();
+  const { user } = useAuthContext();
   const [etapa, setEtapa] = useState<
     "carregando" | "qrcode" | "sucesso" | "erro"
   >("carregando");
@@ -47,6 +49,8 @@ export default function MfaSetupPage() {
     setLoading(true);
     try {
       await verifyMfa(codigo, true);
+      // Marca como verificado nesta sessão para não pedir código novamente
+      if (user) sessionStorage.setItem("mfa_verificado", user.id);
       setEtapa("sucesso");
       setTimeout(() => navigate("/dashboard"), 2500);
     } catch (e) {

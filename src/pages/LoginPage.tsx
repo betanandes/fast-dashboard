@@ -43,6 +43,8 @@ export default function LoginPage() {
       return;
     }
 
+    // Limpa verificação MFA anterior para exigir novo código a cada login
+    sessionStorage.removeItem("mfa_verificado");
     navigate("/dashboard");
   }
 

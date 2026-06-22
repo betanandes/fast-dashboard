@@ -9,6 +9,8 @@ import VencimentosPage from "./pages/VencimentosPage";
 import FornecedoresPage from "./pages/FornecedoresPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
+import MfaSetupPage from "./pages/MfaSetupPage";
+import MfaVerifyPage from "./pages/MfaVerifyPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -26,9 +28,11 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Primeiro acesso — autenticado mas sem layout */}
+          {/* Requerem autenticação mas sem layout */}
           <Route element={<ProtectedRoute />}>
             <Route path="/primeiro-acesso" element={<PrimeiroAcessoPage />} />
+            <Route path="/mfa-verify" element={<MfaVerifyPage />} />
+            <Route path="/mfa-setup" element={<MfaSetupPage />} />
           </Route>
 
           {/* Protegidas com layout */}

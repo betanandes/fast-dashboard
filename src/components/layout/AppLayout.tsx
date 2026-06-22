@@ -17,10 +17,25 @@ import { supabase } from "../../lib/supabase";
 import { useEffect, useState } from "react";
 
 const NAV = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
-  { to: "/vencimentos", icon: CalendarClock, label: "Vencimentos" },
-  { to: "/fornecedores", icon: Building2, label: "Fornecedores" },
-  { to: "/importar", icon: Upload, label: "Importar Excel" },
+  {
+    to: "/dashboard",
+    icon: LayoutDashboard,
+    label: "Visão geral",
+    roles: ["admin", "gestor", "visualizador"],
+  },
+  {
+    to: "/vencimentos",
+    icon: CalendarClock,
+    label: "Vencimentos",
+    roles: ["admin", "gestor", "visualizador"],
+  },
+  {
+    to: "/fornecedores",
+    icon: Building2,
+    label: "Fornecedores",
+    roles: ["admin", "gestor", "visualizador"],
+  },
+  { to: "/importar", icon: Upload, label: "Importar Excel", roles: ["admin"] },
 ];
 
 export default function AppLayout() {
@@ -126,12 +141,13 @@ export default function AppLayout() {
 
         {/* Navegação */}
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-          {NAV.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={collapsed ? label : undefined}
-              className={({ isActive }) => `
+          {NAV.filter((item) => item.roles.includes(perfil?.role ?? "")).map(
+            ({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                title={collapsed ? label : undefined}
+                className={({ isActive }) => `
                 flex items-center gap-3 rounded-lg text-sm transition-all duration-150
                 ${collapsed ? "justify-center py-2.5 px-2" : "px-3 py-2.5"}
                 ${
@@ -140,24 +156,25 @@ export default function AppLayout() {
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }
               `}
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${isActive ? "text-brand-600" : "text-gray-400"}`}
-                  />
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1 truncate">{label}</span>
-                      {isActive && (
-                        <ChevronRight className="w-3 h-3 text-brand-400 shrink-0" />
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${isActive ? "text-brand-600" : "text-gray-400"}`}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 truncate">{label}</span>
+                        {isActive && (
+                          <ChevronRight className="w-3 h-3 text-brand-400 shrink-0" />
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         {/* Usuário */}

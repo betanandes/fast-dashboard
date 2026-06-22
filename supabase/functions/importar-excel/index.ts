@@ -1,3 +1,5 @@
+//Processa um arquivo Excel de pagamentos, extrai os dados relevantes e os insere no banco de dados do Supabase. Suporta modo de pré-visualização para validar o conteúdo antes da importação definitiva.
+
 // Suprime warnings de tipo implícito neste arquivo
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

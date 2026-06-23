@@ -1,47 +1,54 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Shield,
-  CheckCircle,
+  Mail,
   AlertCircle,
   Loader2,
+  CheckCircle,
   RefreshCw,
 } from "lucide-react";
-import { setupMfa, verifyMfa } from "../services/mfa";
-import QRCode from "qrcode";
+import { enviarCodigoEmail, verificarCodigoEmail } from "../services/mfa";
+import { useAuthContext } from "../hooks/AuthContext";
 
-export default function MfaSetupPage() {
+const MFA_VERIFICADO_KEY = "mfa_verificado";
+
+export default function MfaVerifyPage() {
   const navigate = useNavigate();
-  const [etapa, setEtapa] = useState<
-    "carregando" | "qrcode" | "sucesso" | "erro"
-  >("carregando");
-  const [qrUrl, setQrUrl] = useState<string | null>(null);
-  const [secret, setSecret] = useState<string>("");
+  const { user } = useAuthContext();
   const [codigo, setCodigo] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [emailEnviado, setEmailEnviado] = useState(false);
+  const [emailDestino, setEmailDestino] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
+  // Envia o código automaticamente ao entrar na tela
   useEffect(() => {
-    async function carregar() {
-      try {
-        const { secret: s, otpauth_uri } = await setupMfa();
-        setSecret(s);
-
-        // Gera QR code localmente — sem API externa
-        const url = await QRCode.toDataURL(otpauth_uri, {
-          width: 200,
-          margin: 2,
-          color: { dark: "#000000", light: "#FFFFFF" },
-        });
-        setQrUrl(url);
-        setEtapa("qrcode");
-      } catch (e) {
-        setErro(e instanceof Error ? e.message : "Erro ao configurar MFA");
-        setEtapa("erro");
-      }
-    }
-    carregar();
+    handleEnviar();
   }, []);
+
+  // Countdown para reenvio
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  async function handleEnviar() {
+    setEnviando(true);
+    setErro(null);
+    try {
+      const { email } = await enviarCodigoEmail();
+      setEmailDestino(email);
+      setEmailEnviado(true);
+      setCountdown(60); // aguarda 60s para reenviar
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao enviar código");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   async function handleVerificar() {
     if (codigo.length !== 6) {
@@ -51,83 +58,70 @@ export default function MfaSetupPage() {
     setErro(null);
     setLoading(true);
     try {
-      await verifyMfa(codigo, true);
-      setEtapa("sucesso");
-      setTimeout(() => navigate("/dashboard"), 2500);
+      await verificarCodigoEmail(codigo);
+      if (user) sessionStorage.setItem(MFA_VERIFICADO_KEY, user.id);
+      navigate("/dashboard");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Código inválido");
+      setErro(e instanceof Error ? e.message : "Código inválido ou expirado");
+      setCodigo("");
     } finally {
       setLoading(false);
     }
   }
 
+  // Mascara o e-mail: roberta.fernandes@empresa.com → r***a@empresa.com
+  function mascaraEmail(email: string): string {
+    const [local, domain] = email.split("@");
+    if (local.length <= 2) return email;
+    return `${local[0]}${"*".repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-600 rounded-2xl mb-4">
-            <Shield className="w-7 h-7 text-white" />
+            <Mail className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Configurar autenticação
+          <h1 className="text-xl font-semibold text-gray-900">
+            Verificação de acesso
           </h1>
-          <p className="text-gray-500 mt-2 text-sm">
-            Adicione uma camada extra de segurança à sua conta.
+          <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+            {enviando ? (
+              "Enviando código..."
+            ) : emailEnviado ? (
+              <>
+                Enviamos um código para{" "}
+                <strong>{mascaraEmail(emailDestino)}</strong>
+              </>
+            ) : (
+              "Preparando verificação..."
+            )}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          {etapa === "carregando" && (
-            <div className="text-center py-8">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 space-y-5">
+          {enviando && !emailEnviado ? (
+            <div className="text-center py-6">
               <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">Gerando QR code...</p>
+              <p className="text-sm text-gray-500">
+                Enviando código para seu e-mail...
+              </p>
             </div>
-          )}
-
-          {etapa === "qrcode" && (
-            <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                <p className="text-sm font-medium text-blue-800 mb-2">
-                  Como configurar:
-                </p>
-                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                  <li>
-                    Abra o <strong>Microsoft Authenticator</strong> ou{" "}
-                    <strong>Google Authenticator</strong>
-                  </li>
-                  <li>
-                    Toque em <strong>"Adicionar conta"</strong>
-                  </li>
-                  <li>
-                    Escolha <strong>"Escanear QR code"</strong>
-                  </li>
-                  <li>Aponte a câmera para o código abaixo</li>
-                  <li>Digite o código de 6 dígitos gerado</li>
-                </ol>
-              </div>
-
-              {qrUrl && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="border-4 border-white shadow-lg rounded-xl p-2 bg-white inline-block">
-                    <img
-                      src={qrUrl}
-                      alt="QR Code 2FA"
-                      className="w-48 h-48 block"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 text-center">
-                    Não consegue escanear? Digite o código manualmente no app:
+          ) : (
+            <>
+              {emailEnviado && (
+                <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <p className="text-sm text-green-700">
+                    Código enviado! Verifique sua caixa de entrada. Expira em 10
+                    minutos.
                   </p>
-                  <div className="bg-gray-100 rounded-lg px-4 py-2 w-full text-center">
-                    <code className="text-xs font-mono text-gray-700 break-all">
-                      {secret}
-                    </code>
-                  </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5 text-center">
                   Código de verificação
                 </label>
                 <input
@@ -139,13 +133,13 @@ export default function MfaSetupPage() {
                     setErro(null);
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleVerificar()}
-                  className="input text-center text-2xl tracking-widest font-mono"
+                  className="input text-center text-3xl tracking-[0.5em] font-mono py-4"
                   placeholder="000000"
                   maxLength={6}
                   autoFocus
                 />
-                <p className="text-xs text-gray-400 mt-1 text-center">
-                  O código muda a cada 30 segundos
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  Digite o código de 6 dígitos recebido no e-mail
                 </p>
               </div>
 
@@ -162,46 +156,32 @@ export default function MfaSetupPage() {
                 className="btn-primary w-full flex items-center justify-center gap-2 py-3"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {loading ? "Verificando..." : "Confirmar e ativar 2FA"}
+                {loading ? "Verificando..." : "Verificar e entrar"}
               </button>
-            </div>
-          )}
 
-          {etapa === "sucesso" && (
-            <div className="text-center py-6">
-              <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-4" />
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                2FA ativado com sucesso!
-              </h2>
-              <p className="text-sm text-gray-500">
-                A partir de agora, todo login exigirá o código do seu
-                autenticador.
-              </p>
-              <p className="text-xs text-gray-400 mt-3">Redirecionando...</p>
-            </div>
-          )}
-
-          {etapa === "erro" && (
-            <div className="text-center py-6">
-              <AlertCircle className="w-14 h-14 text-red-400 mx-auto mb-4" />
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Erro ao configurar
-              </h2>
-              <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3 mb-4">
-                {erro}
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="btn-secondary flex items-center gap-2 mx-auto"
-              >
-                <RefreshCw className="w-4 h-4" /> Tentar novamente
-              </button>
-            </div>
+              {/* Reenviar código */}
+              <div className="text-center">
+                {countdown > 0 ? (
+                  <p className="text-xs text-gray-400">
+                    Reenviar em {countdown}s
+                  </p>
+                ) : (
+                  <button
+                    onClick={handleEnviar}
+                    disabled={enviando}
+                    className="text-xs text-brand-600 hover:text-brand-700 flex items-center gap-1 mx-auto transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Reenviar código
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          Dúvidas? Entre em contato com o TI.
+          Problemas? Entre em contato com o TI.
         </p>
       </div>
     </div>

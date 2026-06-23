@@ -1,7 +1,4 @@
-//Valida o código TOTP enviado pelo usuário e ativa o MFA se for a primeira vez
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as OTPAuth from "https://esm.sh/otpauth@9.3.6";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -21,7 +18,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { codigo, ativar } = await req.json();
+    const { codigo } = await req.json();
     if (!codigo) {
       return new Response(JSON.stringify({ erro: "Codigo obrigatorio" }), {
         status: 400,
@@ -45,15 +42,15 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Busca o segredo do usuario
+    // Busca código e expiração do banco
     const { data: perfil } = await (supabase.from("usuarios") as any)
-      .select("mfa_secret, mfa_ativo")
+      .select("mfa_codigo, mfa_expiracao")
       .eq("id", user.id)
       .single();
 
-    if (!perfil?.mfa_secret) {
+    if (!perfil?.mfa_codigo) {
       return new Response(
-        JSON.stringify({ erro: "MFA nao configurado para este usuario" }),
+        JSON.stringify({ erro: "Nenhum codigo pendente. Solicite um novo." }),
         {
           status: 400,
           headers: { ...CORS, "Content-Type": "application/json" },
@@ -61,43 +58,42 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Valida o codigo TOTP
-    const totp = new OTPAuth.TOTP({
-      algorithm: "SHA1",
-      digits: 6,
-      period: 30,
-      secret: OTPAuth.Secret.fromBase32(perfil.mfa_secret),
-    });
-
-    // window: 2 aceita 2 periodos antes/depois (60s de tolerancia)
-    const delta = totp.validate({
-      token: codigo.replace(/\s/g, ""),
-      window: 2,
-    });
-    const valido = delta !== null;
-
-    if (!valido) {
-      return new Response(
-        JSON.stringify({ sucesso: false, erro: "Codigo invalido ou expirado" }),
-        {
-          status: 400,
-          headers: { ...CORS, "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    // Se for para ativar o MFA (primeiro uso), marca como ativo
-    if (ativar && !perfil.mfa_ativo) {
+    // Verifica expiração
+    const agora = new Date();
+    const expiracao = new Date(perfil.mfa_expiracao);
+    if (agora > expiracao) {
+      // Limpa código expirado
       await (supabase.from("usuarios") as any)
-        .update({ mfa_ativo: true })
+        .update({ mfa_codigo: null, mfa_expiracao: null })
         .eq("id", user.id);
+
+      return new Response(
+        JSON.stringify({ erro: "Codigo expirado. Solicite um novo." }),
+        {
+          status: 400,
+          headers: { ...CORS, "Content-Type": "application/json" },
+        },
+      );
     }
+
+    // Verifica se o código bate
+    if (perfil.mfa_codigo !== codigo.trim()) {
+      return new Response(JSON.stringify({ erro: "Codigo incorreto." }), {
+        status: 400,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
+
+    // Código correto — limpa do banco
+    await (supabase.from("usuarios") as any)
+      .update({ mfa_codigo: null, mfa_expiracao: null })
+      .eq("id", user.id);
 
     return new Response(JSON.stringify({ sucesso: true }), {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Erro mfa-verify:", err);
+    console.error("Erro mfa-email-verify:", err);
     return new Response(JSON.stringify({ erro: "Erro interno" }), {
       status: 500,
       headers: { ...CORS, "Content-Type": "application/json" },

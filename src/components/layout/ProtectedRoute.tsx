@@ -11,7 +11,6 @@ export default function ProtectedRoute() {
   const location = useLocation();
   const [verificando, setVerificando] = useState(true);
   const [primeiroAcesso, setPrimeiroAcesso] = useState(false);
-  const [mfaAtivo, setMfaAtivo] = useState(false);
   const [role, setRole] = useState<string>("visualizador");
 
   useEffect(() => {
@@ -22,12 +21,11 @@ export default function ProtectedRoute() {
       }
 
       const { data } = await (supabase.from("usuarios") as any)
-        .select("primeiro_acesso, mfa_ativo, role")
+        .select("primeiro_acesso, role")
         .eq("id", user.id)
         .single();
 
       setPrimeiroAcesso(data?.primeiro_acesso === true);
-      setMfaAtivo(data?.mfa_ativo === true);
       setRole(data?.role ?? "visualizador");
       setVerificando(false);
     }
@@ -49,16 +47,10 @@ export default function ProtectedRoute() {
     return <Navigate to="/primeiro-acesso" replace />;
   }
 
+  // MFA por e-mail — verifica se já confirmou nesta sessão
   const mfaVerificado = sessionStorage.getItem(MFA_VERIFICADO_KEY) === user.id;
-  const rotasMfa = ["/mfa-verify", "/mfa-setup", "/primeiro-acesso"];
-
-  // Ainda não configurou MFA → obrigatório configurar
-  if (!mfaAtivo && !rotasMfa.includes(location.pathname)) {
-    return <Navigate to="/mfa-setup" replace />;
-  }
-
-  // Já configurou mas ainda não verificou nesta sessão
-  if (mfaAtivo && !mfaVerificado && !rotasMfa.includes(location.pathname)) {
+  const rotasPublicas = ["/mfa-verify", "/primeiro-acesso"];
+  if (!mfaVerificado && !rotasPublicas.includes(location.pathname)) {
     return <Navigate to="/mfa-verify" replace />;
   }
 

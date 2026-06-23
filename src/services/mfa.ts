@@ -10,12 +10,9 @@ async function getAuthHeader(): Promise<string> {
   return `Bearer ${session.access_token}`;
 }
 
-// Gera o segredo e retorna a URI do QR code
-export async function setupMfa(): Promise<{
-  secret: string;
-  otpauth_uri: string;
-}> {
-  const res = await fetch(`${BASE_URL}/functions/v1/mfa-setup`, {
+// Envia código de verificação para o e-mail do usuário
+export async function enviarCodigoEmail(): Promise<{ email: string }> {
+  const res = await fetch(`${BASE_URL}/functions/v1/mfa-email-send`, {
     method: "POST",
     headers: {
       Authorization: await getAuthHeader(),
@@ -23,39 +20,21 @@ export async function setupMfa(): Promise<{
     },
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.erro ?? "Erro ao configurar MFA");
+  if (!res.ok) throw new Error(data.erro ?? "Erro ao enviar código");
   return data;
 }
 
-// Verifica o código TOTP
-export async function verifyMfa(
-  codigo: string,
-  ativar = false,
-): Promise<boolean> {
-  const res = await fetch(`${BASE_URL}/functions/v1/mfa-verify`, {
+// Verifica o código digitado pelo usuário
+export async function verificarCodigoEmail(codigo: string): Promise<boolean> {
+  const res = await fetch(`${BASE_URL}/functions/v1/mfa-email-verify`, {
     method: "POST",
     headers: {
       Authorization: await getAuthHeader(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ codigo, ativar }),
+    body: JSON.stringify({ codigo }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.erro ?? "Código inválido");
   return data.sucesso === true;
-}
-
-// Verifica se o usuário tem MFA ativo
-export async function verificarMfaAtivo(): Promise<boolean> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { data } = await (supabase.from("usuarios") as any)
-    .select("mfa_ativo")
-    .eq("id", user.id)
-    .single();
-
-  return data?.mfa_ativo === true;
 }

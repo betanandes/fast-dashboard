@@ -17,25 +17,10 @@ import { supabase } from "../../lib/supabase";
 import { useEffect, useState } from "react";
 
 const NAV = [
-  {
-    to: "/dashboard",
-    icon: LayoutDashboard,
-    label: "Visão geral",
-    roles: ["admin", "gestor", "visualizador"],
-  },
-  {
-    to: "/vencimentos",
-    icon: CalendarClock,
-    label: "Vencimentos",
-    roles: ["admin", "gestor", "visualizador"],
-  },
-  {
-    to: "/fornecedores",
-    icon: Building2,
-    label: "Fornecedores",
-    roles: ["admin", "gestor", "visualizador"],
-  },
-  { to: "/importar", icon: Upload, label: "Importar Excel", roles: ["admin"] },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
+  { to: "/vencimentos", icon: CalendarClock, label: "Vencimentos" },
+  { to: "/fornecedores", icon: Building2, label: "Fornecedores" },
+  { to: "/importar", icon: Upload, label: "Importar Excel" },
 ];
 
 export default function AppLayout() {
@@ -98,34 +83,20 @@ export default function AppLayout() {
         {/* Logo */}
         <div
           className={`h-16 flex items-center border-b border-gray-200
-          ${collapsed ? "justify-center" : "px-4 justify-between"}`}
+          ${collapsed ? "justify-center px-2" : "px-3 justify-between"}`}
         >
-          {!collapsed && (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shrink-0">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 leading-none truncate">
-                  Fast TI
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                  Pagamentos
-                </p>
-              </div>
-            </div>
+          {!collapsed ? (
+            <img
+              src="/logo.png"
+              alt="Fast Sistemas Construtivos"
+              className="h-7 w-auto object-contain"
+            />
+          ) : (
+            <img
+              src="/favicon.png"
+              alt="Fast"
+              className="h-7 w-7 object-contain"
+            />
           )}
           <button
             onClick={toggleSidebar}
@@ -141,13 +112,12 @@ export default function AppLayout() {
 
         {/* Navegação */}
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-          {NAV.filter((item) => item.roles.includes(perfil?.role ?? "")).map(
-            ({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                title={collapsed ? label : undefined}
-                className={({ isActive }) => `
+          {NAV.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              title={collapsed ? label : undefined}
+              className={({ isActive }) => `
                 flex items-center gap-3 rounded-lg text-sm transition-all duration-150
                 ${collapsed ? "justify-center py-2.5 px-2" : "px-3 py-2.5"}
                 ${
@@ -156,25 +126,24 @@ export default function AppLayout() {
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }
               `}
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon
-                      className={`w-4 h-4 shrink-0 ${isActive ? "text-brand-600" : "text-gray-400"}`}
-                    />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 truncate">{label}</span>
-                        {isActive && (
-                          <ChevronRight className="w-3 h-3 text-brand-400 shrink-0" />
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ),
-          )}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    className={`w-4 h-4 shrink-0 ${isActive ? "text-brand-600" : "text-gray-400"}`}
+                  />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 truncate">{label}</span>
+                      {isActive && (
+                        <ChevronRight className="w-3 h-3 text-brand-400 shrink-0" />
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
 
         {/* Usuário */}

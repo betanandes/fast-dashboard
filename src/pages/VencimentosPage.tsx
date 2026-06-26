@@ -10,6 +10,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { buscarPagamentos, marcarComoPago } from "../services/dashboard";
+import { useAuthContext } from "../hooks/AuthContext";
+import { supabase } from "../lib/supabase";
 import type { Pagamento } from "../types/database";
 
 function fmtMoeda(v: number) {
@@ -62,6 +64,8 @@ export default function VencimentosPage() {
       : statusUrl === "proximos7"
         ? "proximos"
         : "todos";
+  const { user } = useAuthContext();
+  const [role, setRole] = useState<string>("visualizador");
   const [filtro, setFiltro] = useState<
     "todos" | "vencidos" | "proximos" | "pago"
   >(filtroInicial as "todos" | "vencidos" | "proximos" | "pago");
@@ -74,6 +78,13 @@ export default function VencimentosPage() {
   const carregar = useCallback(async () => {
     setLoading(true);
     try {
+      if (user) {
+        const { data: perfil } = await (supabase.from("usuarios") as any)
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        setRole(perfil?.role ?? "visualizador");
+      }
       const data = await buscarPagamentos();
       const ordenado = [...(data as Pagamento[])].sort((a, b) => {
         if (a.status === "vencido" && b.status !== "vencido") return -1;
@@ -288,7 +299,13 @@ export default function VencimentosPage() {
                           {fmtMoeda(p.valor)}
                         </td>
                         <td className="px-4 py-3">
-                          {!isPago ? (
+                          {isPago ? (
+                            <span className="text-xs text-green-600 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Pago
+                            </span>
+                          ) : role === "visualizador" ? (
+                            <span className="text-xs text-gray-300">—</span>
+                          ) : (
                             <button
                               onClick={() => handlePagar(p.id)}
                               disabled={pagando === p.id}
@@ -301,10 +318,6 @@ export default function VencimentosPage() {
                               )}
                               Marcar pago
                             </button>
-                          ) : (
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" /> Pago
-                            </span>
                           )}
                         </td>
                       </tr>

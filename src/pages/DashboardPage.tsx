@@ -24,6 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import KPICard from "../components/ui/KPICard";
+import { supabase } from "../lib/supabase";
 import Semaforo from "../components/ui/Semaforo";
 import {
   buscarKPIs,
@@ -95,6 +96,7 @@ const TooltipCategoria = ({
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const [role, setRole] = useState<string>("visualizador");
   const tickColor = "#9ca3af";
   const tooltipStyle = {
     fontSize: 12,
@@ -130,6 +132,17 @@ export default function DashboardPage() {
     async function carregar() {
       setLoading(true);
       try {
+        // Busca role do usuário
+        const {
+          data: { user: u },
+        } = await supabase.auth.getUser();
+        if (u) {
+          const { data: perfil } = await (supabase.from("usuarios") as any)
+            .select("role")
+            .eq("id", u.id)
+            .single();
+          setRole(perfil?.role ?? "visualizador");
+        }
         const [k, m, c, f, p, ms] = await Promise.all([
           buscarKPIs(),
           buscarResumoPorMes(),
@@ -585,7 +598,13 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-2.5">{statusBadge(p.status)}</td>
                       <td className="px-4 py-2.5">
-                        {p.status !== "pago" ? (
+                        {p.status === "pago" ? (
+                          <span className="text-xs text-green-600 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" /> Pago
+                          </span>
+                        ) : role === "visualizador" ? (
+                          <span className="text-xs text-gray-300">—</span>
+                        ) : (
                           <button
                             onClick={() => handlePagar(p.id)}
                             disabled={pagando === p.id}
@@ -598,10 +617,6 @@ export default function DashboardPage() {
                             )}
                             Pago
                           </button>
-                        ) : (
-                          <span className="text-xs text-green-600 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" /> Pago
-                          </span>
                         )}
                       </td>
                     </tr>

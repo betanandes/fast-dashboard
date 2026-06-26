@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import {
   AlertCircle,
@@ -71,7 +71,7 @@ export default function VencimentosPage() {
   const em7dias = new Date(hoje);
   em7dias.setDate(hoje.getDate() + 7);
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     setLoading(true);
     try {
       const data = await buscarPagamentos();
@@ -88,11 +88,12 @@ export default function VencimentosPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
+  // Recarrega dados sempre que o usuário navega para esta página
   useEffect(() => {
     carregar();
-  }, []);
+  }, [carregar, location.key]);
 
   // Reseta paginação ao trocar filtro
   useEffect(() => {
@@ -103,9 +104,13 @@ export default function VencimentosPage() {
     setPagando(id);
     try {
       await marcarComoPago(id);
+      // Muda status para pago imediatamente
       setTodos((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status: "pago" } : p)),
       );
+      setPagina(1);
+      // Notifica o dashboard para atualizar os KPIs
+      window.dispatchEvent(new Event("pagamento-confirmado"));
     } catch (e) {
       console.error(e);
     } finally {

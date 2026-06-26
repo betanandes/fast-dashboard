@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -20,6 +21,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import KPICard from "../components/ui/KPICard";
 import Semaforo from "../components/ui/Semaforo";
@@ -92,6 +94,7 @@ const TooltipCategoria = ({
 };
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const tickColor = "#9ca3af";
   const tooltipStyle = {
     fontSize: 12,
@@ -172,10 +175,39 @@ export default function DashboardPage() {
   async function handlePagar(id: string) {
     setPagando(id);
     try {
+      const pagamento = pagamentos.find((p) => p.id === id);
       await marcarComoPago(id);
+
+      // Atualiza tabela
       setPagamentos((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status: "pago" } : p)),
       );
+
+      // Atualiza KPIs localmente para o alerta sumir imediatamente
+      if (pagamento && kpis) {
+        const eraVencido = pagamento.status === "vencido";
+        const eraProximo = pagamento.status === "a_vencer";
+
+        setKpis((prev) =>
+          prev
+            ? {
+                ...prev,
+                count_vencidos: eraVencido
+                  ? prev.count_vencidos - 1
+                  : prev.count_vencidos,
+                total_vencido: eraVencido
+                  ? prev.total_vencido - pagamento.valor
+                  : prev.total_vencido,
+                count_proximos7: eraProximo
+                  ? prev.count_proximos7 - 1
+                  : prev.count_proximos7,
+                total_proximos7: eraProximo
+                  ? prev.total_proximos7 - pagamento.valor
+                  : prev.total_proximos7,
+              }
+            : prev,
+        );
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -218,26 +250,38 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Alertas */}
+      {/* Alertas clicáveis */}
       {kpis && kpis.count_vencidos > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
+        <button
+          onClick={() => navigate("/vencimentos?status=vencido")}
+          className="w-full flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors group text-left"
+        >
           <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-red-700">
+          <p className="text-sm text-red-700 flex-1">
             <strong>{kpis.count_vencidos} pagamento(s) em atraso</strong> —
             total de {fmtCompleto(kpis.total_vencido)}.
           </p>
-        </div>
+          <span className="text-xs text-red-500 flex items-center gap-1 shrink-0 font-medium">
+            Ver todos <ArrowRight className="w-3 h-3" />
+          </span>
+        </button>
       )}
       {kpis && kpis.count_proximos7 > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+        <button
+          onClick={() => navigate("/vencimentos?status=proximos7")}
+          className="w-full flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-xl hover:bg-amber-100 transition-colors group text-left"
+        >
           <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-amber-700">
+          <p className="text-sm text-amber-700 flex-1">
             <strong>
               {kpis.count_proximos7} vencimento(s) nos próximos 7 dias
             </strong>{" "}
             — {fmtCompleto(kpis.total_proximos7)} a pagar.
           </p>
-        </div>
+          <span className="text-xs text-amber-500 flex items-center gap-1 shrink-0 font-medium">
+            Ver todos <ArrowRight className="w-3 h-3" />
+          </span>
+        </button>
       )}
 
       {/* KPIs */}

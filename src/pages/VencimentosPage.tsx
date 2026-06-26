@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   AlertCircle,
   Clock,
@@ -50,10 +51,20 @@ export default function VencimentosPage() {
   const [todos, setTodos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagando, setPagando] = useState<string | null>(null);
+  const location = useLocation();
+  const [pagina, setPagina] = useState(1);
+
+  // Lê filtro da URL ao chegar da tela de dashboard
+  const statusUrl = new URLSearchParams(location.search).get("status");
+  const filtroInicial =
+    statusUrl === "vencido"
+      ? "vencidos"
+      : statusUrl === "proximos7"
+        ? "proximos"
+        : "todos";
   const [filtro, setFiltro] = useState<
     "todos" | "vencidos" | "proximos" | "pago"
-  >("todos");
-  const [pagina, setPagina] = useState(1);
+  >(filtroInicial as "todos" | "vencidos" | "proximos" | "pago");
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);

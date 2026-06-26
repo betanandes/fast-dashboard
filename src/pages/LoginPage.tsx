@@ -88,7 +88,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-xl mb-4">
+          {/* <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-xl mb-4">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -102,11 +102,16 @@ export default function LoginPage() {
                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-          </div>
+          </div> */}
+          <img
+            src="/logo.png"
+            alt="Fast Sistemas Construtivos"
+            className="h-12 w-auto object-contain mx-auto mb-2"
+          />
           <h1 className="text-xl font-semibold text-gray-900">Dashboard TI</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          {/* <p className="text-sm text-gray-500 mt-1">
             Fast Sistemas Construtivos
-          </p>
+          </p> */}
         </div>
 
         <div className="card p-6">

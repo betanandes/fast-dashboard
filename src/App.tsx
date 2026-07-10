@@ -9,7 +9,6 @@ import VencimentosPage from "./pages/VencimentosPage";
 import FornecedoresPage from "./pages/FornecedoresPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
-import MfaVerifyPage from "./pages/MfaVerifyPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -23,17 +22,13 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Requerem autenticação mas sem layout */}
           <Route element={<ProtectedRoute />}>
             <Route path="/primeiro-acesso" element={<PrimeiroAcessoPage />} />
-            <Route path="/mfa-verify" element={<MfaVerifyPage />} />
           </Route>
 
-          {/* Protegidas com layout */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />

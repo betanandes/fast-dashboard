@@ -4,8 +4,6 @@ import { useAuthContext } from "../../hooks/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { Loader2 } from "lucide-react";
 
-const MFA_VERIFICADO_KEY = "mfa_verificado";
-
 export default function ProtectedRoute() {
   const { user, loading } = useAuthContext();
   const location = useLocation();
@@ -42,19 +40,10 @@ export default function ProtectedRoute() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Primeiro acesso — troca de senha obrigatória
   if (primeiroAcesso && location.pathname !== "/primeiro-acesso") {
     return <Navigate to="/primeiro-acesso" replace />;
   }
 
-  // MFA por e-mail — verifica se já confirmou nesta sessão
-  const mfaVerificado = sessionStorage.getItem(MFA_VERIFICADO_KEY) === user.id;
-  const rotasPublicas = ["/mfa-verify", "/primeiro-acesso"];
-  if (!mfaVerificado && !rotasPublicas.includes(location.pathname)) {
-    return <Navigate to="/mfa-verify" replace />;
-  }
-
-  // Bloqueia /importar para quem não é admin
   if (location.pathname === "/importar" && role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }

@@ -10,6 +10,8 @@ import {
   PanelLeftOpen,
   Shield,
   User,
+  Settings,
+  Sheet,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
@@ -20,7 +22,9 @@ const NAV = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
   { to: "/vencimentos", icon: CalendarClock, label: "Vencimentos" },
   { to: "/fornecedores", icon: Building2, label: "Fornecedores" },
-  { to: "/importar", icon: Upload, label: "Importar Excel" },
+  { to: "/planilhas", icon: Sheet, label: "Planilhas" },
+  { to: "/importar", icon: Upload, label: "Importar DRE" },
+  { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
 export default function AppLayout() {

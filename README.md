@@ -41,6 +41,20 @@ npm run dev
 
 Acesse http://localhost:5173
 
+> O comando correto é `npm run dev` (com **run**, não `ru`). Se as dependências
+> ainda não estiverem instaladas, execute `npm install` uma vez antes.
+
+### Integração SULTS
+
+A tela **Configurações** permite validar o token, localizar o ID do analista nos
+chamados recentes e salvar uma mensagem padrão no navegador. Por segurança, o
+token da API existe somente durante a sessão da aba e não é persistido.
+
+A API pública documentada oferece listagem e criação de chamados, mas ainda não
+documenta um endpoint para publicar uma resposta em um chamado existente. O envio
+automático deve ser ativado somente depois que esse endpoint for fornecido pela
+SULTS.
+
 ---
 
 ## 3. Deploy no Vercel

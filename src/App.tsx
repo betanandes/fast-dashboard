@@ -9,6 +9,8 @@ import VencimentosPage from "./pages/VencimentosPage";
 import FornecedoresPage from "./pages/FornecedoresPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage";
+import PlanilhasPage from "./pages/PlanilhasPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -35,6 +37,8 @@ export default function App() {
               <Route path="/vencimentos" element={<VencimentosPage />} />
               <Route path="/fornecedores" element={<FornecedoresPage />} />
               <Route path="/importar" element={<ImportarPage />} />
+              <Route path="/planilhas" element={<PlanilhasPage />} />
+              <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             </Route>
           </Route>
 

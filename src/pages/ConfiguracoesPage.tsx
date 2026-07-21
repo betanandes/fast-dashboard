@@ -22,6 +22,7 @@ import {
   testarConexaoSults,
   type ConfiguracaoSults,
 } from "../services/sults";
+import PlantaoConfiguracoes from "../components/configuracoes/PlantaoConfiguracoes";
 
 type Feedback = { tipo: "sucesso" | "erro" | "info"; texto: string } | null;
 
@@ -298,6 +299,9 @@ export default function ConfiguracoesPage() {
             </p>
           </div>
         </aside>
+      </div>
+      <div className="mt-6">
+        <PlantaoConfiguracoes />
       </div>
     </div>
   );

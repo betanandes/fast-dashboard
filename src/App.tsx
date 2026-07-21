@@ -4,13 +4,16 @@ import { useAuth } from "./hooks/useAuth";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import ImportarPage from "./pages/ImportarPage";
 import VencimentosPage from "./pages/VencimentosPage";
 import FornecedoresPage from "./pages/FornecedoresPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage";
-import PlanilhasPage from "./pages/PlanilhasPage";
+import LicencasPage from "./pages/LicencasPage";
+import SoftwaresPage from "./pages/SoftwaresPage";
+import MaquinasPage from "./pages/MaquinasPage";
+import PlantaoPage from "./pages/PlantaoPage";
+import ProvedoresPage from "./pages/ProvedoresPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -36,8 +39,13 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/vencimentos" element={<VencimentosPage />} />
               <Route path="/fornecedores" element={<FornecedoresPage />} />
-              <Route path="/importar" element={<ImportarPage />} />
-              <Route path="/planilhas" element={<PlanilhasPage />} />
+              <Route path="/licencas" element={<LicencasPage />} />
+              <Route path="/softwares" element={<SoftwaresPage />} />
+              <Route path="/maquinas" element={<MaquinasPage />} />
+              <Route path="/plantao" element={<PlantaoPage />} />
+              <Route path="/provedores" element={<ProvedoresPage />} />
+              <Route path="/importar" element={<Navigate to="/licencas" replace />} />
+              <Route path="/planilhas" element={<Navigate to="/licencas" replace />} />
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             </Route>
           </Route>

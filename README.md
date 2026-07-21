@@ -55,6 +55,15 @@ documenta um endpoint para publicar uma resposta em um chamado existente. O envi
 automático deve ser ativado somente depois que esse endpoint for fornecido pela
 SULTS.
 
+### Controles de TI
+
+Licenças, softwares e máquinas possuem páginas independentes, respectivamente
+nos formatos dashboard, cards e lista. Provedores e escala de plantão também
+ficam disponíveis na navegação lateral. Não há opção de importação nessas telas.
+
+O destinatário, dia e horário do aviso semanal de plantão são definidos em
+**Configurações**. Consulte `supabase/DEPLOY.md` para publicar a função agendada.
+
 ---
 
 ## 3. Deploy no Vercel

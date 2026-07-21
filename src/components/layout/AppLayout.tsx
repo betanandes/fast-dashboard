@@ -2,7 +2,6 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarClock,
-  Upload,
   Building2,
   LogOut,
   ChevronRight,
@@ -11,7 +10,11 @@ import {
   Shield,
   User,
   Settings,
-  Sheet,
+  BadgeCheck,
+  AppWindow,
+  MonitorCog,
+  CalendarDays,
+  Wifi,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
@@ -22,8 +25,11 @@ const NAV = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
   { to: "/vencimentos", icon: CalendarClock, label: "Vencimentos" },
   { to: "/fornecedores", icon: Building2, label: "Fornecedores" },
-  { to: "/planilhas", icon: Sheet, label: "Planilhas" },
-  { to: "/importar", icon: Upload, label: "Importar DRE" },
+  { to: "/licencas", icon: BadgeCheck, label: "Licenças" },
+  { to: "/softwares", icon: AppWindow, label: "Softwares" },
+  { to: "/maquinas", icon: MonitorCog, label: "Máquinas" },
+  { to: "/provedores", icon: Wifi, label: "Provedores" },
+  { to: "/plantao", icon: CalendarDays, label: "Plantão" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 

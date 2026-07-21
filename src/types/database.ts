@@ -36,6 +36,34 @@ export interface Usuario {
   role: 'admin' | 'gestor' | 'visualizador'
 }
 
+export interface PlantaoTI {
+  id: string
+  data: string
+  colaborador_nome: string
+  colaborador_email: string
+  telefone: string | null
+  observacao: string | null
+  created_at: string
+  created_by: string | null
+}
+
+export interface ConfiguracaoPlantao {
+  id: number
+  email_destino: string
+  dia_envio: number
+  hora_envio: string
+  ativo: boolean
+  updated_at: string
+  updated_by: string | null
+}
+
+export interface PlantaoNotificacao {
+  id: string
+  plantao_id: string
+  email_destino: string
+  enviado_em: string
+}
+
 // Tipo que o Supabase client usa para inferência
 export interface Database {
   public: {
@@ -54,6 +82,21 @@ export interface Database {
         Row: Usuario
         Insert: Omit<Usuario, 'id'>
         Update: Partial<Omit<Usuario, 'id'>>
+      }
+      plantoes_ti: {
+        Row: PlantaoTI
+        Insert: Omit<PlantaoTI, 'id' | 'created_at'>
+        Update: Partial<Omit<PlantaoTI, 'id' | 'created_at'>>
+      }
+      configuracoes_plantao: {
+        Row: ConfiguracaoPlantao
+        Insert: Omit<ConfiguracaoPlantao, 'updated_at'>
+        Update: Partial<Omit<ConfiguracaoPlantao, 'id' | 'updated_at'>>
+      }
+      plantao_notificacoes: {
+        Row: PlantaoNotificacao
+        Insert: Omit<PlantaoNotificacao, 'id' | 'enviado_em'>
+        Update: Partial<Omit<PlantaoNotificacao, 'id' | 'enviado_em'>>
       }
     }
   }

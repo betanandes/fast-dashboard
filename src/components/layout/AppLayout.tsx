@@ -17,6 +17,7 @@ import {
   Wifi,
   Moon,
   Sun,
+  Tickets,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
@@ -32,6 +33,7 @@ const NAV = [
   { to: "/softwares", icon: AppWindow, label: "Softwares" },
   { to: "/maquinas", icon: MonitorCog, label: "Máquinas" },
   { to: "/provedores", icon: Wifi, label: "Provedores" },
+  { to: "/chamados", icon: Tickets, label: "Chamados TI" },
   { to: "/plantao", icon: CalendarDays, label: "Plantão" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];

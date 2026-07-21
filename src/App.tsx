@@ -16,6 +16,7 @@ import SoftwaresPage from "./pages/SoftwaresPage";
 import MaquinasPage from "./pages/MaquinasPage";
 import PlantaoPage from "./pages/PlantaoPage";
 import ProvedoresPage from "./pages/ProvedoresPage";
+import ChamadosPage from "./pages/ChamadosPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/maquinas" element={<MaquinasPage />} />
               <Route path="/plantao" element={<PlantaoPage />} />
               <Route path="/provedores" element={<ProvedoresPage />} />
+              <Route path="/chamados" element={<ChamadosPage />} />
               <Route path="/importar" element={<Navigate to="/licencas" replace />} />
               <Route path="/planilhas" element={<Navigate to="/licencas" replace />} />
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />

@@ -64,6 +64,11 @@ ficam disponíveis na navegação lateral. Não há opção de importação ness
 O destinatário, dia e horário do aviso semanal de plantão são definidos em
 **Configurações**. Consulte `supabase/DEPLOY.md` para publicar a função agendada.
 
+Licenças, softwares e máquinas possuem inclusão, edição e exclusão persistidas
+no Supabase. A aba **Chamados TI** consolida os tickets do SULTS e permite
+analisar situação, responsáveis, assuntos e pessoas de apoio. As credenciais
+SULTS permanecem exclusivamente no servidor.
+
 ---
 
 ## 3. Deploy no Vercel

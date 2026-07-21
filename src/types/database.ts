@@ -98,6 +98,21 @@ export interface Database {
         Insert: Omit<PlantaoNotificacao, 'id' | 'enviado_em'>
         Update: Partial<Omit<PlantaoNotificacao, 'id' | 'enviado_em'>>
       }
+      licencas_ti: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+      }
+      softwares_ti: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+      }
+      maquinas_ti: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+      }
     }
   }
 }

@@ -51,3 +51,24 @@ header `x-cron-secret` com o mesmo valor de `CRON_SECRET`.
 A função compara o dia e horário atuais no fuso `America/Sao_Paulo` com os
 valores da tela **Configurações**, busca o próximo sábado em `plantoes_ti` e
 registra o envio em `plantao_notificacoes` para impedir duplicidades.
+
+## CRUD dos cadastros de TI
+
+Execute no **SQL Editor** o arquivo:
+
+```text
+supabase/migrations/20260722_cadastros_ti.sql
+```
+
+Ele cria as tabelas de licenças, softwares e máquinas. Usuários autenticados
+podem consultar; somente perfis `admin` e `gestor` podem alterar ou excluir.
+
+## Painel de chamados SULTS
+
+Em desenvolvimento, as variáveis `SULTS_*` do `.env` são lidas pelo proxy do
+Vite. Depois de preencher `SULTS_API_TOKEN`, reinicie `npm run dev`.
+
+Na Vercel, cadastre as mesmas variáveis em **Settings → Environment Variables**,
+incluindo `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A função
+`api/sults/tickets.ts` valida a sessão Supabase antes de usar o token e nunca o
+envia ao navegador.

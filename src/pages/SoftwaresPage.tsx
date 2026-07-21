@@ -1,39 +1,54 @@
 import { useState } from "react";
-import { ArrowUpRight, CircleDollarSign, Search, SlidersHorizontal, X } from "lucide-react";
-import { SOFTWARES } from "../data/tiData";
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ArrowUpRight, BadgeCheck, CircleDollarSign, Search, Shapes, X } from "lucide-react";
+import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
+import { useDataLayout } from "../hooks/useDataLayout";
+import { SOFTWARES, type SoftwareTI } from "../data/tiData";
+import { useThemeContext } from "../hooks/ThemeContext";
 
+const RESPONSAVEIS = [...new Set(SOFTWARES.map((item) => item.responsavel))].sort();
 const moeda = (valor: number) => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export default function SoftwaresPage() {
-  const [busca, setBusca] = useState("");
-  const [satisfacao, setSatisfacao] = useState("Todos");
-  const [responsavel, setResponsavel] = useState("Todos");
-  const [faixa, setFaixa] = useState("Todos");
-  const responsaveis = [...new Set(SOFTWARES.map((item) => item.responsavel))].sort();
-  const dados = SOFTWARES.filter((item) => {
-    const termo = busca.trim().toLocaleLowerCase("pt-BR");
-    const texto = Object.values(item).join(" ").toLocaleLowerCase("pt-BR");
-    const custoOk = faixa === "Todos" || (faixa === "Até R$ 500" && item.valorMensal <= 500) || (faixa === "R$ 501 a R$ 2.000" && item.valorMensal > 500 && item.valorMensal <= 2000) || (faixa === "Acima de R$ 2.000" && item.valorMensal > 2000);
-    return (!termo || texto.includes(termo)) && (satisfacao === "Todos" || item.satisfaz === satisfacao) && (responsavel === "Todos" || item.responsavel === responsavel) && custoOk;
-  });
+function Satisfacao({ valor }: { valor: SoftwareTI["satisfaz"] }) {
+  return <span className={`badge ${valor === "Sim" ? "badge-ok" : valor === "Em análise" ? "badge-warn" : "badge-danger"}`}>{valor}</span>;
+}
 
+function Cards({ dados }: { dados: SoftwareTI[] }) {
+  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{dados.map((item) => <article key={item.nome} className="card flex min-h-64 flex-col p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"><div className="mb-4 flex items-start justify-between gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-900 text-lg font-semibold text-white">{item.nome[0]}</div><Satisfacao valor={item.satisfaz} /></div><h2 className="font-semibold text-gray-900">{item.nome}</h2><p className="mt-1 flex-1 text-xs leading-5 text-gray-500">{item.aplicacao}</p><div className="my-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-3"><div><p className="text-[10px] text-gray-400">Mensal</p><p className="mt-1 text-sm font-semibold text-gray-900">{moeda(item.valorMensal)}</p></div><div><p className="text-[10px] text-gray-400">Anual</p><p className="mt-1 text-sm font-semibold text-gray-900">{moeda(item.valorAnual)}</p></div></div><div className="flex items-center justify-between border-t border-gray-100 pt-4"><div><p className="text-[10px] text-gray-400">Responsável</p><p className="text-xs font-medium text-gray-700">{item.responsavel}</p></div><a href={item.link} target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-200 hover:text-brand-600"><ArrowUpRight className="h-4 w-4" /></a></div></article>)}</div>;
+}
+
+function Tabela({ dados }: { dados: SoftwareTI[] }) {
+  return <section className="card overflow-hidden"><div className="flex items-center justify-between border-b border-gray-100 px-5 py-4"><h2 className="text-sm font-semibold text-gray-900">Softwares contratados</h2><span className="text-xs text-gray-400">{dados.length} resultado(s)</span></div><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left"><thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500"><tr><th className="px-5 py-3">Software</th><th className="px-4 py-3">Aplicação</th><th className="px-4 py-3">Responsável</th><th className="px-4 py-3">Mensal</th><th className="px-4 py-3">Anual</th><th className="px-4 py-3">Avaliação</th><th className="px-4 py-3" /></tr></thead><tbody>{dados.map((item) => <tr key={item.nome} className="border-t border-gray-100 text-xs hover:bg-gray-50"><td className="px-5 py-3 font-semibold text-gray-900">{item.nome}</td><td className="max-w-64 truncate px-4 py-3 text-gray-500">{item.aplicacao}</td><td className="px-4 py-3 text-gray-700">{item.responsavel}</td><td className="px-4 py-3 font-medium text-gray-700">{moeda(item.valorMensal)}</td><td className="px-4 py-3 text-gray-500">{moeda(item.valorAnual)}</td><td className="px-4 py-3"><Satisfacao valor={item.satisfaz} /></td><td className="px-4 py-3"><a href={item.link} target="_blank" rel="noreferrer" className="text-brand-600"><ArrowUpRight className="h-4 w-4" /></a></td></tr>)}</tbody></table></div>{!dados.length && <p className="p-10 text-center text-sm text-gray-400">Nenhum software encontrado.</p>}</section>;
+}
+
+function Lista({ dados }: { dados: SoftwareTI[] }) {
+  return <section className="card divide-y divide-gray-100 overflow-hidden">{dados.map((item) => <article key={item.nome} className="grid items-center gap-4 px-5 py-4 hover:bg-gray-50 md:grid-cols-[minmax(240px,1fr)_150px_150px_120px]"><div><p className="text-sm font-semibold text-gray-900">{item.nome}</p><p className="mt-1 text-xs text-gray-400">{item.aplicacao}</p></div><div><p className="text-[10px] uppercase text-gray-400">Responsável</p><p className="mt-1 text-xs font-medium text-gray-700">{item.responsavel}</p></div><div><p className="text-[10px] uppercase text-gray-400">Custo mensal</p><p className="mt-1 text-xs font-semibold text-gray-900">{moeda(item.valorMensal)}</p></div><div className="md:text-right"><Satisfacao valor={item.satisfaz} /></div></article>)}{!dados.length && <p className="p-10 text-center text-sm text-gray-400">Nenhum software encontrado.</p>}</section>;
+}
+
+export default function SoftwaresPage() {
+  const { dark } = useThemeContext();
+  const [layout, setLayout] = useDataLayout("softwares", "cards");
+  const [busca, setBusca] = useState(""); const [satisfacao, setSatisfacao] = useState("Todos"); const [responsavel, setResponsavel] = useState("Todos"); const [faixa, setFaixa] = useState("Todos");
+  const termo = busca.trim().toLocaleLowerCase("pt-BR");
+  const dados = SOFTWARES.filter((item) => { const texto = Object.values(item).join(" ").toLocaleLowerCase("pt-BR"); const custoOk = faixa === "Todos" || (faixa === "Até R$ 500" && item.valorMensal <= 500) || (faixa === "R$ 501 a R$ 2.000" && item.valorMensal > 500 && item.valorMensal <= 2000) || (faixa === "Acima de R$ 2.000" && item.valorMensal > 2000); return (!termo || texto.includes(termo)) && (satisfacao === "Todos" || item.satisfaz === satisfacao) && (responsavel === "Todos" || item.responsavel === responsavel) && custoOk; });
   const limpar = () => { setBusca(""); setSatisfacao("Todos"); setResponsavel("Todos"); setFaixa("Todos"); };
-  return <div className="page">
-    <div className="page-header"><div><h1 className="page-title">Softwares e contratos</h1><p className="page-subtitle">Catálogo de ferramentas, acessos, responsáveis e custos.</p></div><span className="badge badge-info">Layout cards</span></div>
-    <div className="card mb-6 p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_repeat(3,190px)_auto]">
-      <label className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input className="input pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar software, aplicação, acesso ou responsável..." /></label>
-      <select className="input" value={satisfacao} onChange={(e) => setSatisfacao(e.target.value)}><option>Todos</option><option>Sim</option><option>Em análise</option><option>Não</option></select>
-      <select className="input" value={responsavel} onChange={(e) => setResponsavel(e.target.value)}><option>Todos</option>{responsaveis.map((item) => <option key={item}>{item}</option>)}</select>
-      <select className="input" value={faixa} onChange={(e) => setFaixa(e.target.value)}><option>Todos</option><option>Até R$ 500</option><option>R$ 501 a R$ 2.000</option><option>Acima de R$ 2.000</option></select>
-      <button type="button" onClick={limpar} className="btn-secondary flex items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button>
-    </div></div>
-    <div className="mb-4 flex items-center justify-between"><p className="flex items-center gap-2 text-xs text-gray-500"><SlidersHorizontal className="h-4 w-4" /> {dados.length} software(s) encontrado(s)</p><p className="text-xs text-gray-500">Custo mensal filtrado: <strong className="text-gray-900">{moeda(dados.reduce((soma, item) => soma + item.valorMensal, 0))}</strong></p></div>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{dados.map((item) => <article key={item.nome} className="card flex min-h-64 flex-col p-5 transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className="mb-4 flex items-start justify-between gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-900 text-lg font-semibold text-white">{item.nome.slice(0, 1)}</div><span className={`badge ${item.satisfaz === "Sim" ? "badge-ok" : item.satisfaz === "Em análise" ? "badge-warn" : "badge-danger"}`}>{item.satisfaz}</span></div>
-      <h2 className="font-semibold text-gray-900">{item.nome}</h2><p className="mt-1 flex-1 text-xs leading-5 text-gray-500">{item.aplicacao}</p>
-      <div className="my-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-3"><div><p className="text-[10px] text-gray-400">Mensal</p><p className="mt-1 text-sm font-semibold text-gray-900">{moeda(item.valorMensal)}</p></div><div><p className="text-[10px] text-gray-400">Anual</p><p className="mt-1 text-sm font-semibold text-gray-900">{moeda(item.valorAnual)}</p></div></div>
-      <div className="flex items-center justify-between border-t border-gray-100 pt-4"><div><p className="text-[10px] text-gray-400">Responsável</p><p className="text-xs font-medium text-gray-700">{item.responsavel}</p></div><a href={item.link} target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-brand-200 hover:text-brand-600" title={`Abrir ${item.nome}`}><ArrowUpRight className="h-4 w-4" /></a></div>
-    </article>)}</div>
-    {dados.length === 0 && <div className="card p-12 text-center"><CircleDollarSign className="mx-auto mb-3 h-7 w-7 text-gray-300" /><p className="text-sm text-gray-500">Nenhum software encontrado.</p></div>}
+  const totalMensal = dados.reduce((soma, item) => soma + item.valorMensal, 0); const aprovados = dados.filter((item) => item.satisfaz === "Sim").length;
+  const topCustos = [...dados].sort((a, b) => b.valorMensal - a.valorMensal).slice(0, 7);
+  const porSatisfacao = ["Sim", "Em análise", "Não"].map((nome) => ({ nome, total: dados.filter((item) => item.satisfaz === nome).length })).filter((item) => item.total);
+  const cores = ["#16a34a", "#d97706", "#dc2626"];
+  const tooltip = { backgroundColor: dark ? "#111827" : "#fff", border: `1px solid ${dark ? "#374151" : "#e5e7eb"}`, borderRadius: 8, fontSize: 12 };
+
+  return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Softwares e contratos</h1><p className="page-subtitle">Ferramentas, acessos, responsáveis e custos.</p></div><DataLayoutSwitcher value={layout} onChange={setLayout} /></div>
+    <div className="card mb-5 p-4"><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6"><label className="relative sm:col-span-2"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input className="input pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar software, aplicação, acesso ou responsável..." /></label><select className="input" value={satisfacao} onChange={(e) => setSatisfacao(e.target.value)}><option>Todos</option><option>Sim</option><option>Em análise</option><option>Não</option></select><select className="input" value={responsavel} onChange={(e) => setResponsavel(e.target.value)}><option>Todos</option>{RESPONSAVEIS.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={faixa} onChange={(e) => setFaixa(e.target.value)}><option>Todos</option><option>Até R$ 500</option><option>R$ 501 a R$ 2.000</option><option>Acima de R$ 2.000</option></select><button type="button" onClick={limpar} className="btn-secondary flex w-full items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button></div></div>
+
+    {layout === "dashboard" && <div className="space-y-5"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
+      { label: "Soluções filtradas", value: dados.length, icon: Shapes, color: "bg-blue-50 text-blue-600" },
+      { label: "Custo mensal", value: moeda(totalMensal), icon: CircleDollarSign, color: "bg-amber-50 text-amber-600" },
+      { label: "Projeção anual", value: moeda(dados.reduce((soma, item) => soma + item.valorAnual, 0)), icon: CircleDollarSign, color: "bg-violet-50 text-violet-600" },
+      { label: "Satisfação positiva", value: dados.length ? `${Math.round(aprovados / dados.length * 100)}%` : "0%", icon: BadgeCheck, color: "bg-green-50 text-green-600" },
+    ].map(({ label, value, icon: Icon, color }) => <div key={label} className="card flex items-center gap-4 p-4"><div className={`flex h-11 w-11 items-center justify-center rounded-xl ${color}`}><Icon className="h-5 w-5" /></div><div><p className="text-xs text-gray-500">{label}</p><p className="mt-1 text-xl font-semibold text-gray-900">{value}</p></div></div>)}</div>
+      <div className="grid gap-5 lg:grid-cols-3"><div className="card p-5 lg:col-span-2"><h2 className="mb-4 text-sm font-semibold text-gray-900">Maiores custos mensais</h2><ResponsiveContainer width="100%" height={230}><BarChart data={topCustos}><XAxis dataKey="nome" tick={{ fill: dark ? "#9ca3af" : "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-15} height={45} /><YAxis tickFormatter={(valor) => `R$${Number(valor) / 1000}k`} tick={{ fill: dark ? "#9ca3af" : "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip formatter={(valor) => [moeda(Number(valor)), "Mensal"]} contentStyle={tooltip} /><Bar dataKey="valorMensal" fill="#2563eb" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div><div className="card p-5"><h2 className="mb-4 text-sm font-semibold text-gray-900">Satisfação</h2><ResponsiveContainer width="100%" height={190}><PieChart><Pie data={porSatisfacao} dataKey="total" nameKey="nome" innerRadius={45} outerRadius={70} paddingAngle={3}>{porSatisfacao.map((_, index) => <Cell key={index} fill={cores[index]} />)}</Pie><Tooltip contentStyle={tooltip} /></PieChart></ResponsiveContainer><div className="space-y-2">{porSatisfacao.map((item, index) => <div key={item.nome} className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 text-gray-500"><span className="h-2 w-2 rounded-full" style={{ background: cores[index] }} />{item.nome}</span><strong className="text-gray-900">{item.total}</strong></div>)}</div></div></div><Tabela dados={dados} /></div>}
+    {layout === "cards" && <Cards dados={dados} />}
+    {layout === "list" && <Lista dados={dados} />}
   </div>;
 }

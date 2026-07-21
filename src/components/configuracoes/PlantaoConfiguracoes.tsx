@@ -5,6 +5,7 @@ import {
   carregarConfiguracaoPlantao,
   salvarConfiguracaoPlantao,
 } from "../../services/plantao";
+import { BANCO_TI_ATIVO } from "../../services/cadastrosTi";
 
 const DIAS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
@@ -57,6 +58,7 @@ export default function PlantaoConfiguracoes() {
         </label>
       </div>
       <div className="p-6">
+        {!BANCO_TI_ATIVO && <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700"><strong className="font-semibold">Modo local ativo.</strong> A configuração fica salva neste navegador. Para habilitar o envio automático de e-mail, aplique as migrations e defina <code>VITE_TI_DATABASE_ENABLED=true</code>.</div>}
         {carregando ? <div className="flex items-center gap-2 py-6 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Carregando configuração...</div> : <>
           <div className="grid gap-4 md:grid-cols-[minmax(260px,1fr)_220px_160px]">
             <label><span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600"><Mail className="h-3.5 w-3.5" /> E-mail destinatário</span><input type="email" className="input" value={config.email_destino} onChange={(event) => setConfig((atual) => ({ ...atual, email_destino: event.target.value }))} placeholder="gestor.ti@empresa.com.br" /></label>

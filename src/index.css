@@ -147,6 +147,19 @@
 .dark .ti-workspace .card {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
+.dark .ti-workspace .input {
+  background-color: #111827;
+  border-color: #374151;
+  color: #f9fafb;
+  color-scheme: dark;
+}
+.dark .ti-workspace .input::placeholder {
+  color: #6b7280;
+}
+.dark .ti-workspace select.input option {
+  background-color: #111827;
+  color: #f9fafb;
+}
 
 @media (max-width: 767px) {
   .ti-workspace .page-header {

@@ -6,10 +6,37 @@ export type SoftwareRegistro = SoftwareTI & { id: string };
 export type MaquinaRegistro = MaquinaTI & { id: string };
 export type ProvedorRegistro = ProvedorTI & { id: string };
 
+export const BANCO_TI_ATIVO = import.meta.env.VITE_TI_DATABASE_ENABLED === "true";
+const STORAGE_PREFIX = "fast-dashboard:cadastro-ti:";
+
 const demoLicencas = () => LICENCAS.map((item, index) => ({ ...item, id: `demo-licenca-${index}` }));
 const demoSoftwares = () => SOFTWARES.map((item, index) => ({ ...item, id: `demo-software-${index}` }));
 const demoMaquinas = () => MAQUINAS.map((item, index) => ({ ...item, id: `demo-maquina-${index}` }));
 const demoProvedores = () => PROVEDORES.map((item, index) => ({ ...item, id: `demo-provedor-${index}` }));
+
+function lerLocal<T extends { id: string }>(chave: string, fallback: () => T[]): T[] {
+  try {
+    const salvo = localStorage.getItem(`${STORAGE_PREFIX}${chave}`);
+    return salvo ? JSON.parse(salvo) as T[] : fallback();
+  } catch {
+    return fallback();
+  }
+}
+
+function salvarLocal<T extends { id: string }>(chave: string, item: T, fallback: () => T[]) {
+  const registros = lerLocal(chave, fallback);
+  const indice = item.id ? registros.findIndex((registro) => registro.id === item.id) : -1;
+  const salvo = { ...item, id: item.id && indice >= 0 ? item.id : `local-${crypto.randomUUID()}` };
+  const atualizados = indice >= 0 ? registros.map((registro, posicao) => posicao === indice ? salvo : registro) : [...registros, salvo];
+  localStorage.setItem(`${STORAGE_PREFIX}${chave}`, JSON.stringify(atualizados));
+  return atualizados;
+}
+
+function excluirLocal<T extends { id: string }>(chave: string, item: T, fallback: () => T[]) {
+  const atualizados = lerLocal(chave, fallback).filter((registro) => registro.id !== item.id);
+  localStorage.setItem(`${STORAGE_PREFIX}${chave}`, JSON.stringify(atualizados));
+  return atualizados;
+}
 
 function licencaPayload(item: LicencaTI) { return { colaborador: item.colaborador, departamento: item.departamento, codigo_sap: item.codigoSap, app_control: item.appControl, perfil: item.perfil, crm: item.crm, logistica: item.logistica, financeiro: item.financeiro, status: item.status }; }
 function softwarePayload(item: SoftwareTI) { return { nome: item.nome, aplicacao: item.aplicacao, acesso: item.acesso, valor_mensal: item.valorMensal, valor_anual: item.valorAnual, satisfaz: item.satisfaz, link: item.link, responsavel: item.responsavel }; }
@@ -39,10 +66,10 @@ async function selecionar(tabela: TabelaCadastro) {
   }
 }
 
-export async function listarLicencas() { const rows = await selecionar("licencas_ti"); return rows.length ? rows.map(mapLicenca) : demoLicencas(); }
-export async function listarSoftwares() { const rows = await selecionar("softwares_ti"); return rows.length ? rows.map(mapSoftware) : demoSoftwares(); }
-export async function listarMaquinas() { const rows = await selecionar("maquinas_ti"); return rows.length ? rows.map(mapMaquina) : demoMaquinas(); }
-export async function listarProvedores() { const rows = await selecionar("provedores_ti"); return rows.length ? rows.map(mapProvedor) : demoProvedores(); }
+export async function listarLicencas() { if (!BANCO_TI_ATIVO) return lerLocal("licencas", demoLicencas); const rows = await selecionar("licencas_ti"); return rows.length ? rows.map(mapLicenca) : demoLicencas(); }
+export async function listarSoftwares() { if (!BANCO_TI_ATIVO) return lerLocal("softwares", demoSoftwares); const rows = await selecionar("softwares_ti"); return rows.length ? rows.map(mapSoftware) : demoSoftwares(); }
+export async function listarMaquinas() { if (!BANCO_TI_ATIVO) return lerLocal("maquinas", demoMaquinas); const rows = await selecionar("maquinas_ti"); return rows.length ? rows.map(mapMaquina) : demoMaquinas(); }
+export async function listarProvedores() { if (!BANCO_TI_ATIVO) return lerLocal("provedores", demoProvedores); const rows = await selecionar("provedores_ti"); return rows.length ? rows.map(mapProvedor) : demoProvedores(); }
 
 function indiceDemo(id: string) {
   if (!id.startsWith("demo-")) return null;
@@ -55,12 +82,12 @@ async function prepararSoftwares() { let rows = await selecionar("softwares_ti")
 async function prepararMaquinas() { let rows = await selecionar("maquinas_ti"); if (!rows.length) { const { data, error } = await supabase.from("maquinas_ti").insert(MAQUINAS.map(maquinaPayload) as never).select("*"); if (error) throw error; rows = (data ?? []) as unknown as Record<string, unknown>[]; } return rows.map(mapMaquina); }
 async function prepararProvedores() { let rows = await selecionar("provedores_ti"); if (!rows.length) { const { data, error } = await supabase.from("provedores_ti").insert(PROVEDORES.map(provedorPayload) as never).select("*"); if (error) throw error; rows = (data ?? []) as unknown as Record<string, unknown>[]; } return rows.map(mapProvedor); }
 
-export async function salvarLicenca(item: LicencaRegistro) { const base = await prepararLicencas(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.appControl === LICENCAS[indice]?.appControl)?.id; const query = id ? supabase.from("licencas_ti").update(licencaPayload(item) as never).eq("id", id) : supabase.from("licencas_ti").insert(licencaPayload(item) as never); const { error } = await query; if (error) throw error; return listarLicencas(); }
-export async function salvarSoftware(item: SoftwareRegistro) { const base = await prepararSoftwares(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.nome === SOFTWARES[indice]?.nome)?.id; const query = id ? supabase.from("softwares_ti").update(softwarePayload(item) as never).eq("id", id) : supabase.from("softwares_ti").insert(softwarePayload(item) as never); const { error } = await query; if (error) throw error; return listarSoftwares(); }
-export async function salvarMaquina(item: MaquinaRegistro) { const base = await prepararMaquinas(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.serie === MAQUINAS[indice]?.serie)?.id; const query = id ? supabase.from("maquinas_ti").update(maquinaPayload(item) as never).eq("id", id) : supabase.from("maquinas_ti").insert(maquinaPayload(item) as never); const { error } = await query; if (error) throw error; return listarMaquinas(); }
-export async function salvarProvedor(item: ProvedorRegistro) { const base = await prepararProvedores(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.loja === PROVEDORES[indice]?.loja)?.id; const query = id ? supabase.from("provedores_ti").update(provedorPayload(item) as never).eq("id", id) : supabase.from("provedores_ti").insert(provedorPayload(item) as never); const { error } = await query; if (error) throw error; return listarProvedores(); }
+export async function salvarLicenca(item: LicencaRegistro) { if (!BANCO_TI_ATIVO) return salvarLocal("licencas", item, demoLicencas); const base = await prepararLicencas(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.appControl === LICENCAS[indice]?.appControl)?.id; const query = id ? supabase.from("licencas_ti").update(licencaPayload(item) as never).eq("id", id) : supabase.from("licencas_ti").insert(licencaPayload(item) as never); const { error } = await query; if (error) throw error; return listarLicencas(); }
+export async function salvarSoftware(item: SoftwareRegistro) { if (!BANCO_TI_ATIVO) return salvarLocal("softwares", item, demoSoftwares); const base = await prepararSoftwares(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.nome === SOFTWARES[indice]?.nome)?.id; const query = id ? supabase.from("softwares_ti").update(softwarePayload(item) as never).eq("id", id) : supabase.from("softwares_ti").insert(softwarePayload(item) as never); const { error } = await query; if (error) throw error; return listarSoftwares(); }
+export async function salvarMaquina(item: MaquinaRegistro) { if (!BANCO_TI_ATIVO) return salvarLocal("maquinas", item, demoMaquinas); const base = await prepararMaquinas(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.serie === MAQUINAS[indice]?.serie)?.id; const query = id ? supabase.from("maquinas_ti").update(maquinaPayload(item) as never).eq("id", id) : supabase.from("maquinas_ti").insert(maquinaPayload(item) as never); const { error } = await query; if (error) throw error; return listarMaquinas(); }
+export async function salvarProvedor(item: ProvedorRegistro) { if (!BANCO_TI_ATIVO) return salvarLocal("provedores", item, demoProvedores); const base = await prepararProvedores(); const indice = indiceDemo(item.id); const id = indice === null ? item.id : base.find((registro) => registro.loja === PROVEDORES[indice]?.loja)?.id; const query = id ? supabase.from("provedores_ti").update(provedorPayload(item) as never).eq("id", id) : supabase.from("provedores_ti").insert(provedorPayload(item) as never); const { error } = await query; if (error) throw error; return listarProvedores(); }
 
-export async function excluirLicenca(item: LicencaRegistro) { const base = await prepararLicencas(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.appControl === item.appControl)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("licencas_ti").delete().eq("id", id); if (error) throw error; return listarLicencas(); }
-export async function excluirSoftware(item: SoftwareRegistro) { const base = await prepararSoftwares(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.nome === item.nome)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("softwares_ti").delete().eq("id", id); if (error) throw error; return listarSoftwares(); }
-export async function excluirMaquina(item: MaquinaRegistro) { const base = await prepararMaquinas(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.serie === item.serie)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("maquinas_ti").delete().eq("id", id); if (error) throw error; return listarMaquinas(); }
-export async function excluirProvedor(item: ProvedorRegistro) { const base = await prepararProvedores(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.loja === item.loja)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("provedores_ti").delete().eq("id", id); if (error) throw error; return listarProvedores(); }
+export async function excluirLicenca(item: LicencaRegistro) { if (!BANCO_TI_ATIVO) return excluirLocal("licencas", item, demoLicencas); const base = await prepararLicencas(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.appControl === item.appControl)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("licencas_ti").delete().eq("id", id); if (error) throw error; return listarLicencas(); }
+export async function excluirSoftware(item: SoftwareRegistro) { if (!BANCO_TI_ATIVO) return excluirLocal("softwares", item, demoSoftwares); const base = await prepararSoftwares(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.nome === item.nome)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("softwares_ti").delete().eq("id", id); if (error) throw error; return listarSoftwares(); }
+export async function excluirMaquina(item: MaquinaRegistro) { if (!BANCO_TI_ATIVO) return excluirLocal("maquinas", item, demoMaquinas); const base = await prepararMaquinas(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.serie === item.serie)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("maquinas_ti").delete().eq("id", id); if (error) throw error; return listarMaquinas(); }
+export async function excluirProvedor(item: ProvedorRegistro) { if (!BANCO_TI_ATIVO) return excluirLocal("provedores", item, demoProvedores); const base = await prepararProvedores(); const id = item.id.startsWith("demo-") ? base.find((registro) => registro.loja === item.loja)?.id : item.id; if (!id) throw new Error("Registro não encontrado."); const { error } = await supabase.from("provedores_ti").delete().eq("id", id); if (error) throw error; return listarProvedores(); }

@@ -73,6 +73,11 @@ Se o console mostrar `404` para `licencas_ti`, `softwares_ti`, `maquinas_ti`,
 `provedores_ti`, `plantoes_ti` ou `configuracoes_plantao`, as migrations acima
 ainda não foram aplicadas no projeto Supabase usado pelo `.env`.
 
+Enquanto as tabelas não existirem, mantenha `VITE_TI_DATABASE_ENABLED=false`.
+Assim, os cadastros funcionam no armazenamento local do navegador sem gerar
+requisições 404. Depois de aplicar todas as migrations, altere para `true` e
+reinicie o servidor de desenvolvimento.
+
 ## Painel de chamados SULTS
 
 Em desenvolvimento, as variáveis `SULTS_*` do `.env` são lidas pelo proxy do

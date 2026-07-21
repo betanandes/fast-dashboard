@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "./hooks/AuthContext";
 import { useAuth } from "./hooks/useAuth";
+import { useTheme } from "./hooks/useTheme";
+import { ThemeContext } from "./hooks/ThemeContext";
 
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -23,10 +25,12 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const theme = useTheme();
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <ThemeContext.Provider value={theme}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -51,8 +55,9 @@ export default function App() {
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeContext.Provider>
   );
 }

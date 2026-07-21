@@ -15,11 +15,14 @@ import {
   MonitorCog,
   CalendarDays,
   Wifi,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
 import { supabase } from "../../lib/supabase";
 import { useEffect, useState } from "react";
+import { useThemeContext } from "../../hooks/ThemeContext";
 
 const NAV = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
@@ -36,6 +39,7 @@ const NAV = [
 export default function AppLayout() {
   const { user, signOut } = useAuthContext();
   const { collapsed, toggle: toggleSidebar } = useSidebar();
+  const { dark, toggle: toggleTheme } = useThemeContext();
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<{ nome: string; role: string } | null>(
     null,
@@ -81,7 +85,7 @@ export default function AppLayout() {
   const iniciais = getIniciais(nomeExibido);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 transition-colors duration-200">
       {/* Sidebar */}
       <aside
         className={`
@@ -158,6 +162,16 @@ export default function AppLayout() {
 
         {/* Usuário */}
         <div className="p-2 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${collapsed ? "justify-center" : ""}`}
+            title={dark ? "Usar tema claro" : "Usar tema escuro"}
+            aria-label={dark ? "Usar tema claro" : "Usar tema escuro"}
+          >
+            {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-gray-400" />}
+            {!collapsed && <span className="flex-1 text-left">{dark ? "Tema claro" : "Tema escuro"}</span>}
+          </button>
           <div
             className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${collapsed ? "justify-center" : ""}`}
           >

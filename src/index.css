@@ -5,7 +5,7 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-200 dark:bg-gray-950 dark:text-gray-100;
   }
 }
 
@@ -16,30 +16,32 @@
   }
   .btn-secondary {
     @apply bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg
-           border border-gray-200 transition-all duration-150 active:scale-95;
+           border border-gray-200 transition-all duration-150 active:scale-95
+           dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700;
   }
   .input {
     @apply w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-900
            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500
-           focus:border-transparent text-sm transition-all duration-150;
+           focus:border-transparent text-sm transition-all duration-150
+           dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500;
   }
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-800;
   }
   .badge {
     @apply inline-block text-xs font-medium px-2 py-0.5 rounded-full;
   }
   .badge-danger {
-    @apply bg-red-100 text-red-700;
+    @apply bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300;
   }
   .badge-warn {
-    @apply bg-amber-100 text-amber-700;
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300;
   }
   .badge-ok {
-    @apply bg-green-100 text-green-700;
+    @apply bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300;
   }
   .badge-info {
-    @apply bg-blue-100 text-blue-700;
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300;
   }
   .page {
     @apply p-6 md:p-8 max-w-7xl mx-auto;
@@ -48,12 +50,42 @@
     @apply flex items-center justify-between mb-6;
   }
   .page-title {
-    @apply text-xl font-semibold text-gray-900;
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100;
   }
   .page-subtitle {
-    @apply text-sm text-gray-500 mt-0.5;
+    @apply text-sm text-gray-500 mt-0.5 dark:text-gray-400;
   }
 }
+
+/* Harmoniza utilitários usados nas telas existentes sem duplicar variantes em
+   centenas de elementos. Cores semânticas continuam preservadas. */
+.dark .bg-white { background-color: #111827; }
+.dark .bg-gray-50 { background-color: #030712; }
+.dark .bg-gray-100 { background-color: #1f2937; }
+.dark .bg-gray-900 { background-color: #111827; }
+.dark .border-gray-50,
+.dark .border-gray-100,
+.dark .border-gray-200 { border-color: #1f2937; }
+.dark .text-gray-900 { color: #f9fafb; }
+.dark .text-gray-800,
+.dark .text-gray-700 { color: #e5e7eb; }
+.dark .text-gray-600 { color: #d1d5db; }
+.dark .text-gray-500 { color: #9ca3af; }
+.dark .text-gray-400 { color: #9ca3af; }
+.dark .bg-brand-50 { background-color: rgba(196, 30, 35, 0.14); }
+.dark .bg-red-50 { background-color: rgba(127, 29, 29, 0.24); }
+.dark .bg-red-100 { background-color: rgba(127, 29, 29, 0.34); }
+.dark .bg-amber-50 { background-color: rgba(120, 53, 15, 0.22); }
+.dark .bg-amber-100 { background-color: rgba(120, 53, 15, 0.32); }
+.dark .bg-green-50 { background-color: rgba(20, 83, 45, 0.22); }
+.dark .bg-green-100 { background-color: rgba(20, 83, 45, 0.32); }
+.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.22); }
+.dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.32); }
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover { background-color: #1f2937; }
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
 
 /* Scrollbar */
 ::-webkit-scrollbar {

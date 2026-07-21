@@ -22,6 +22,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
+  CalendarDays,
+  Mail,
+  Phone,
+  UserRoundCheck,
 } from "lucide-react";
 import KPICard from "../components/ui/KPICard";
 import { supabase } from "../lib/supabase";
@@ -36,7 +40,9 @@ import {
   marcarComoPago,
   type FiltrosPagamentos,
 } from "../services/dashboard";
-import type { Pagamento } from "../types/database";
+import type { Pagamento, PlantaoTI } from "../types/database";
+import { listarPlantoes } from "../services/plantao";
+import { useThemeContext } from "../hooks/ThemeContext";
 
 function fmtMoeda(v: number) {
   if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
@@ -96,14 +102,15 @@ const TooltipCategoria = ({
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { dark } = useThemeContext();
   const [role, setRole] = useState<string>("visualizador");
-  const tickColor = "#9ca3af";
+  const tickColor = dark ? "#9ca3af" : "#6b7280";
   const tooltipStyle = {
     fontSize: 12,
     borderRadius: 8,
-    backgroundColor: "#fff",
-    border: "1px solid #e5e7eb",
-    color: "#111827",
+    backgroundColor: dark ? "#111827" : "#fff",
+    border: `1px solid ${dark ? "#374151" : "#e5e7eb"}`,
+    color: dark ? "#f9fafb" : "#111827",
   };
 
   const [kpis, setKpis] = useState<Awaited<
@@ -127,6 +134,7 @@ export default function DashboardPage() {
   const [loadingTabela, setLoadingTabela] = useState(false);
   const [pagando, setPagando] = useState<string | null>(null);
   const [pagina, setPagina] = useState(1);
+  const [proximoPlantao, setProximoPlantao] = useState<PlantaoTI | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -137,19 +145,22 @@ export default function DashboardPage() {
           data: { user: u },
         } = await supabase.auth.getUser();
         if (u) {
-          const { data: perfil } = await (supabase.from("usuarios") as any)
+          const { data } = await supabase
+            .from("usuarios")
             .select("role")
             .eq("id", u.id)
             .single();
+          const perfil = data as unknown as { role: string } | null;
           setRole(perfil?.role ?? "visualizador");
         }
-        const [k, m, c, f, p, ms] = await Promise.all([
+        const [k, m, c, f, p, ms, escala] = await Promise.all([
           buscarKPIs(),
           buscarResumoPorMes(),
           buscarPorCategoria(),
           buscarTopFornecedores(),
           buscarPagamentos(),
           buscarMesesDisponiveis(),
+          listarPlantoes().catch(() => []),
         ]);
         setKpis(k);
         setPorMes(m);
@@ -158,6 +169,9 @@ export default function DashboardPage() {
         setFornecedores(f);
         setPagamentos(p as Pagamento[]);
         setMeses(ms as string[]);
+        const hoje = new Date();
+        const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+        setProximoPlantao(escala.find((item) => item.data >= hojeISO) ?? null);
       } catch (e) {
         console.error(e);
       } finally {
@@ -262,6 +276,25 @@ export default function DashboardPage() {
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar
         </button>
       </div>
+
+      {/* Próximo plantão */}
+      <button
+        type="button"
+        onClick={() => navigate("/plantao")}
+        className="card grid w-full overflow-hidden text-left transition-all hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[210px_minmax(0,1fr)_auto]"
+      >
+        <div className="flex items-center gap-3 bg-gray-900 px-5 py-4 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><CalendarDays className="h-5 w-5 text-brand-300" /></div>
+          <div><p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Próximo plantão</p><p className="mt-1 text-xs text-gray-300">Sábado • 08h às 13h</p></div>
+        </div>
+        {proximoPlantao ? <>
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-600"><UserRoundCheck className="h-5 w-5" /></div>
+            <div className="min-w-0"><p className="truncate text-sm font-semibold text-gray-900">{proximoPlantao.colaborador_nome}</p><p className="mt-1 capitalize text-xs text-gray-500">{new Date(`${proximoPlantao.data}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</p></div>
+          </div>
+          <div className="flex flex-col justify-center gap-1 border-t border-gray-100 px-5 py-3 text-[11px] text-gray-500 md:border-l md:border-t-0"><span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {proximoPlantao.colaborador_email}</span>{proximoPlantao.telefone && <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {proximoPlantao.telefone}</span>}</div>
+        </> : <div className="flex items-center justify-between gap-4 px-5 py-4 md:col-span-2"><div><p className="text-sm font-medium text-gray-700">Nenhum plantão futuro cadastrado</p><p className="mt-1 text-xs text-gray-400">Acesse a escala para definir o próximo sábado.</p></div><span className="flex items-center gap-1 text-xs font-medium text-brand-600">Configurar <ArrowRight className="h-3.5 w-3.5" /></span></div>}
+      </button>
 
       {/* Alertas clicáveis */}
       {kpis && kpis.count_vencidos > 0 && (

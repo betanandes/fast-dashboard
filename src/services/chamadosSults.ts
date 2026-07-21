@@ -43,14 +43,29 @@ export interface ResultadoChamadosSults {
   aviso?: string;
 }
 
-let requisicaoEmAndamento: Promise<ResultadoChamadosSults> | null = null;
+export interface OpcoesConsultaChamados {
+  refresh?: boolean;
+  inicio?: string;
+  fim?: string;
+}
 
-async function executarConsulta(refresh: boolean): Promise<ResultadoChamadosSults> {
+const requisicoesEmAndamento = new Map<string, Promise<ResultadoChamadosSults>>();
+
+function dataUtc(valor: string, fimDoDia = false) {
+  return new Date(`${valor}T${fimDoDia ? "23:59:59.999" : "00:00:00.000"}`).toISOString();
+}
+
+async function executarConsulta(opcoes: OpcoesConsultaChamados): Promise<ResultadoChamadosSults> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) throw new Error("Usuário não autenticado.");
-  const resposta = await fetch(`/api/sults/tickets${refresh ? "?refresh=true" : ""}`, {
+  const parametros = new URLSearchParams();
+  if (opcoes.refresh) parametros.set("refresh", "true");
+  if (opcoes.inicio) parametros.set("abertoStart", dataUtc(opcoes.inicio));
+  if (opcoes.fim) parametros.set("abertoEnd", dataUtc(opcoes.fim, true));
+  const url = `/api/sults/tickets${parametros.size ? `?${parametros}` : ""}`;
+  const resposta = await fetch(url, {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   const corpo = await resposta.json().catch(() => null) as { data?: ChamadoSultsAnalitico[]; cache?: boolean; stale?: boolean; aviso?: string; erro?: string } | null;
@@ -58,13 +73,15 @@ async function executarConsulta(refresh: boolean): Promise<ResultadoChamadosSult
   return { data: corpo?.data ?? [], cache: Boolean(corpo?.cache), stale: Boolean(corpo?.stale), aviso: corpo?.aviso };
 }
 
-export async function carregarChamadosSults(refresh = false): Promise<ResultadoChamadosSults> {
-  if (!requisicaoEmAndamento) requisicaoEmAndamento = executarConsulta(refresh);
-  const requisicao = requisicaoEmAndamento;
+export async function carregarChamadosSults(opcoes: boolean | OpcoesConsultaChamados = {}): Promise<ResultadoChamadosSults> {
+  const normalizadas = typeof opcoes === "boolean" ? { refresh: opcoes } : opcoes;
+  const chave = JSON.stringify(normalizadas);
+  if (!requisicoesEmAndamento.has(chave)) requisicoesEmAndamento.set(chave, executarConsulta(normalizadas));
+  const requisicao = requisicoesEmAndamento.get(chave)!;
   try {
     return await requisicao;
   } finally {
-    if (requisicaoEmAndamento === requisicao) requisicaoEmAndamento = null;
+    if (requisicoesEmAndamento.get(chave) === requisicao) requisicoesEmAndamento.delete(chave);
   }
 }
 

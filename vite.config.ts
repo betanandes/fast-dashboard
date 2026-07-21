@@ -21,7 +21,10 @@ export default defineConfig(({ mode }) => {
             }
             try {
               const url = new URL(req.url ?? '/', 'http://localhost')
-              const resultado = await buscarTodosChamados(env, url.searchParams.get('refresh') === 'true')
+              const resultado = await buscarTodosChamados(env, url.searchParams.get('refresh') === 'true', {
+                abertoStart: url.searchParams.get('abertoStart') ?? undefined,
+                abertoEnd: url.searchParams.get('abertoEnd') ?? undefined,
+              })
               res.statusCode = 200
               res.end(JSON.stringify(resultado))
             } catch (erro) {

@@ -28,8 +28,13 @@ interface ResultadoChamados {
   aviso?: string;
 }
 
-let cache: { expiraEm: number; data: unknown[] } | null = null;
-let consultaEmAndamento: Promise<unknown[]> | null = null;
+export interface FiltroPeriodoChamados {
+  abertoStart?: string;
+  abertoEnd?: string;
+}
+
+const caches = new Map<string, { expiraEm: number; data: unknown[] }>();
+const consultasEmAndamento = new Map<string, Promise<unknown[]>>();
 
 function numero(valor: string | undefined, padrao: number) {
   const convertido = Number(valor);
@@ -82,7 +87,7 @@ async function requisitarPagina(url: URL, headers: Record<string, string>, timeo
   throw new Error("Não foi possível consultar a SULTS após novas tentativas.");
 }
 
-async function consultarSults(env: SultsServerEnv) {
+async function consultarSults(env: SultsServerEnv, filtros: FiltroPeriodoChamados) {
   const token = env.SULTS_API_TOKEN?.trim();
   if (!token) throw new Error("SULTS_API_TOKEN não foi configurado no servidor.");
   const base = (env.SULTS_API_BASE_URL ?? "https://api.sults.com.br/api/v1").replace(/\/$/, "");
@@ -103,6 +108,8 @@ async function consultarSults(env: SultsServerEnv) {
     const url = new URL(`${base}${path.startsWith("/") ? path : `/${path}`}`);
     url.searchParams.set("start", String(pagina));
     url.searchParams.set("limit", String(limit));
+    if (filtros.abertoStart) url.searchParams.set("abertoStart", filtros.abertoStart);
+    if (filtros.abertoEnd) url.searchParams.set("abertoEnd", filtros.abertoEnd);
     const corpo = await requisitarPagina(url, headers, timeout, env);
     const lote = corpo?.data ?? [];
     chamados.push(...lote);
@@ -114,20 +121,22 @@ async function consultarSults(env: SultsServerEnv) {
   return chamados;
 }
 
-export async function buscarTodosChamados(env: SultsServerEnv, ignorarCache = false): Promise<ResultadoChamados> {
+export async function buscarTodosChamados(env: SultsServerEnv, ignorarCache = false, filtros: FiltroPeriodoChamados = {}): Promise<ResultadoChamados> {
   const ttl = numero(env.TICKET_CACHE_TTL_MS, 600_000);
+  const chave = `${filtros.abertoStart ?? "todos"}|${filtros.abertoEnd ?? "todos"}`;
+  const cache = caches.get(chave);
   if (!ignorarCache && cache && cache.expiraEm > Date.now()) return { data: cache.data, cache: true };
 
-  if (!consultaEmAndamento) consultaEmAndamento = consultarSults(env);
-  const consulta = consultaEmAndamento;
+  if (!consultasEmAndamento.has(chave)) consultasEmAndamento.set(chave, consultarSults(env, filtros));
+  const consulta = consultasEmAndamento.get(chave)!;
   try {
     const data = await consulta;
-    cache = { data, expiraEm: Date.now() + ttl };
+    caches.set(chave, { data, expiraEm: Date.now() + ttl });
     return { data, cache: false };
   } catch (erro) {
     if (cache?.data.length) return { data: cache.data, cache: true, stale: true, aviso: erro instanceof Error ? erro.message : String(erro) };
     throw erro;
   } finally {
-    if (consultaEmAndamento === consulta) consultaEmAndamento = null;
+    if (consultasEmAndamento.get(chave) === consulta) consultasEmAndamento.delete(chave);
   }
 }

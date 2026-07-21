@@ -36,7 +36,16 @@ export function nomeAssunto(chamado: ChamadoSultsAnalitico) {
   return chamado.assunto?.nome ?? chamado.assunto?.assunto ?? "Sem assunto";
 }
 
-export async function carregarChamadosSults(refresh = false): Promise<{ data: ChamadoSultsAnalitico[]; cache: boolean }> {
+export interface ResultadoChamadosSults {
+  data: ChamadoSultsAnalitico[];
+  cache: boolean;
+  stale?: boolean;
+  aviso?: string;
+}
+
+let requisicaoEmAndamento: Promise<ResultadoChamadosSults> | null = null;
+
+async function executarConsulta(refresh: boolean): Promise<ResultadoChamadosSults> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -44,9 +53,19 @@ export async function carregarChamadosSults(refresh = false): Promise<{ data: Ch
   const resposta = await fetch(`/api/sults/tickets${refresh ? "?refresh=true" : ""}`, {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
-  const corpo = await resposta.json().catch(() => null) as { data?: ChamadoSultsAnalitico[]; cache?: boolean; erro?: string } | null;
+  const corpo = await resposta.json().catch(() => null) as { data?: ChamadoSultsAnalitico[]; cache?: boolean; stale?: boolean; aviso?: string; erro?: string } | null;
   if (!resposta.ok) throw new Error(corpo?.erro ?? `Erro HTTP ${resposta.status}`);
-  return { data: corpo?.data ?? [], cache: Boolean(corpo?.cache) };
+  return { data: corpo?.data ?? [], cache: Boolean(corpo?.cache), stale: Boolean(corpo?.stale), aviso: corpo?.aviso };
+}
+
+export async function carregarChamadosSults(refresh = false): Promise<ResultadoChamadosSults> {
+  if (!requisicaoEmAndamento) requisicaoEmAndamento = executarConsulta(refresh);
+  const requisicao = requisicaoEmAndamento;
+  try {
+    return await requisicao;
+  } finally {
+    if (requisicaoEmAndamento === requisicao) requisicaoEmAndamento = null;
+  }
 }
 
 function normalizar(valor: string) {

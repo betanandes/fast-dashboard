@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarClock,
@@ -38,11 +38,14 @@ const NAV = [
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
+const ROTAS_TI = new Set(["/licencas", "/softwares", "/maquinas", "/provedores", "/chamados", "/plantao"]);
+
 export default function AppLayout() {
   const { user, signOut } = useAuthContext();
   const { collapsed, toggle: toggleSidebar } = useSidebar();
   const { dark, toggle: toggleTheme } = useThemeContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const [perfil, setPerfil] = useState<{ nome: string; role: string } | null>(
     null,
   );
@@ -91,16 +94,13 @@ export default function AppLayout() {
       {/* Sidebar */}
       <aside
         className={`
-        flex flex-col shrink-0 transition-all duration-300 ease-in-out
-        bg-white border-r border-gray-200
-        ${collapsed ? "w-16" : "w-56"}
+        relative z-30 flex shrink-0 flex-col border-r border-gray-200 bg-white
+        transition-[width] duration-300 ease-in-out
+        ${collapsed ? "w-[72px]" : "w-64"}
       `}
       >
         {/* Logo */}
-        <div
-          className={`h-16 flex items-center border-b border-gray-200
-          ${collapsed ? "justify-center px-2" : "px-3 justify-between"}`}
-        >
+        <div className={`relative flex h-16 shrink-0 items-center border-b border-gray-200 ${collapsed ? "justify-center px-3" : "justify-between px-4"}`}>
           {!collapsed ? (
             <img
               src="/logo.png"
@@ -115,8 +115,11 @@ export default function AppLayout() {
             />
           )}
           <button
+            type="button"
             onClick={toggleSidebar}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className={`${collapsed ? "absolute -right-3 top-5 border border-gray-200 bg-white shadow-sm" : ""} flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700`}
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           >
             {collapsed ? (
               <PanelLeftOpen className="w-4 h-4" />
@@ -127,15 +130,15 @@ export default function AppLayout() {
         </div>
 
         {/* Navegação */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {NAV.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               title={collapsed ? label : undefined}
               className={({ isActive }) => `
-                flex items-center gap-3 rounded-lg text-sm transition-all duration-150
-                ${collapsed ? "justify-center py-2.5 px-2" : "px-3 py-2.5"}
+                group relative flex min-h-10 items-center gap-3 rounded-xl text-sm transition-all duration-150
+                ${collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}
                 ${
                   isActive
                     ? "bg-brand-50 text-brand-700 font-medium"
@@ -146,7 +149,7 @@ export default function AppLayout() {
               {({ isActive }) => (
                 <>
                   <Icon
-                    className={`w-4 h-4 shrink-0 ${isActive ? "text-brand-600" : "text-gray-400"}`}
+                    className={`h-[18px] w-[18px] shrink-0 ${isActive ? "text-brand-600" : "text-gray-400 group-hover:text-gray-600"}`}
                   />
                   {!collapsed && (
                     <>
@@ -163,11 +166,11 @@ export default function AppLayout() {
         </nav>
 
         {/* Usuário */}
-        <div className="p-2 border-t border-gray-200">
+        <div className="border-t border-gray-200 p-3">
           <button
             type="button"
             onClick={toggleTheme}
-            className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${collapsed ? "justify-center" : ""}`}
+            className={`mb-1 flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${collapsed ? "justify-center" : ""}`}
             title={dark ? "Usar tema claro" : "Usar tema escuro"}
             aria-label={dark ? "Usar tema claro" : "Usar tema escuro"}
           >
@@ -175,7 +178,7 @@ export default function AppLayout() {
             {!collapsed && <span className="flex-1 text-left">{dark ? "Tema claro" : "Tema escuro"}</span>}
           </button>
           <div
-            className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${collapsed ? "justify-center" : ""}`}
+            className={`flex items-center gap-2.5 rounded-xl px-2 py-2 ${collapsed ? "justify-center" : ""}`}
           >
             <div
               className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${corAvatar.bg}`}
@@ -227,7 +230,7 @@ export default function AppLayout() {
                 await signOut();
                 navigate("/login");
               }}
-              className="w-full flex justify-center mt-1 text-gray-400 hover:text-red-500 transition-colors"
+              className="mt-1 flex min-h-9 w-full items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
               title="Sair"
             >
               <LogOut className="w-4 h-4" />
@@ -237,7 +240,7 @@ export default function AppLayout() {
       </aside>
 
       {/* Conteúdo */}
-      <main className="flex-1 overflow-y-auto bg-gray-50">
+      <main className={`flex-1 overflow-y-auto bg-gray-50 ${ROTAS_TI.has(location.pathname) ? "ti-workspace" : ""}`}>
         <Outlet />
       </main>
     </div>

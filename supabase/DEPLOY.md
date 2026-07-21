@@ -69,10 +69,18 @@ Para habilitar o CRUD de provedores, execute também:
 supabase/migrations/20260723_provedores_ti.sql
 ```
 
+Se o console mostrar `404` para `licencas_ti`, `softwares_ti`, `maquinas_ti`,
+`provedores_ti`, `plantoes_ti` ou `configuracoes_plantao`, as migrations acima
+ainda não foram aplicadas no projeto Supabase usado pelo `.env`.
+
 ## Painel de chamados SULTS
 
 Em desenvolvimento, as variáveis `SULTS_*` do `.env` são lidas pelo proxy do
 Vite. Depois de preencher `SULTS_API_TOKEN`, reinicie `npm run dev`.
+
+O proxy consolida consultas simultâneas, preserva o último cache válido e
+aplica espera progressiva quando a SULTS responde com HTTP 429. Os valores
+opcionais estão documentados no `.env.example`.
 
 Na Vercel, cadastre as mesmas variáveis em **Settings → Environment Variables**,
 incluindo `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A função

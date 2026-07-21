@@ -21,10 +21,22 @@ function mapSoftware(row: Record<string, unknown>): SoftwareRegistro { return { 
 function mapMaquina(row: Record<string, unknown>): MaquinaRegistro { return { id: String(row.id), maquina: String(row.maquina), serie: String(row.serie), modelo: String(row.modelo), unidade: String(row.unidade), contato: String(row.contato), cnpj: String(row.cnpj), cidade: String(row.cidade), ip: String(row.ip), status: row.status as MaquinaTI["status"], observacao: String(row.observacao ?? "") }; }
 function mapProvedor(row: Record<string, unknown>): ProvedorRegistro { return { id: String(row.id), loja: String(row.loja), cidade: String(row.cidade), uf: String(row.uf), provedorPrincipal: String(row.provedor_principal), provedorBackup: String(row.provedor_backup), velocidade: String(row.velocidade), tecnologia: row.tecnologia as ProvedorTI["tecnologia"], status: row.status as ProvedorTI["status"], telefoneSuporte: String(row.telefone_suporte), vencimentoContrato: String(row.vencimento_contrato) }; }
 
-async function selecionar(tabela: "licencas_ti" | "softwares_ti" | "maquinas_ti" | "provedores_ti") {
-  const { data, error } = await supabase.from(tabela).select("*").order("created_at");
-  if (error) throw error;
-  return (data ?? []) as unknown as Record<string, unknown>[];
+type TabelaCadastro = "licencas_ti" | "softwares_ti" | "maquinas_ti" | "provedores_ti";
+const consultasEmAndamento = new Map<TabelaCadastro, Promise<Record<string, unknown>[]>>();
+
+async function selecionar(tabela: TabelaCadastro) {
+  const existente = consultasEmAndamento.get(tabela);
+  if (existente) return existente;
+  const consulta = Promise.resolve(supabase.from(tabela).select("*").order("created_at").then(({ data, error }) => {
+    if (error) throw error;
+    return (data ?? []) as unknown as Record<string, unknown>[];
+  }));
+  consultasEmAndamento.set(tabela, consulta);
+  try {
+    return await consulta;
+  } finally {
+    if (consultasEmAndamento.get(tabela) === consulta) consultasEmAndamento.delete(tabela);
+  }
 }
 
 export async function listarLicencas() { const rows = await selecionar("licencas_ti"); return rows.length ? rows.map(mapLicenca) : demoLicencas(); }

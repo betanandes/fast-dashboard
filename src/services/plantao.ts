@@ -11,14 +11,20 @@ export const CONFIG_PLANTAO_PADRAO: ConfiguracaoPlantao = {
   updated_by: null,
 };
 
+let consultaConfiguracao: Promise<ConfiguracaoPlantao> | null = null;
+let consultaPlantoes: Promise<PlantaoTI[]> | null = null;
+
 export async function carregarConfiguracaoPlantao(): Promise<ConfiguracaoPlantao> {
-  const { data, error } = await supabase
-    .from("configuracoes_plantao")
-    .select("*")
-    .eq("id", 1)
-    .maybeSingle();
-  if (error) throw error;
-  return data ?? CONFIG_PLANTAO_PADRAO;
+  if (!consultaConfiguracao) consultaConfiguracao = Promise.resolve(supabase.from("configuracoes_plantao").select("*").eq("id", 1).maybeSingle().then(({ data, error }) => {
+    if (error) throw error;
+    return data ?? CONFIG_PLANTAO_PADRAO;
+  }));
+  const consulta = consultaConfiguracao;
+  try {
+    return await consulta;
+  } finally {
+    if (consultaConfiguracao === consulta) consultaConfiguracao = null;
+  }
 }
 
 export async function salvarConfiguracaoPlantao(
@@ -39,12 +45,16 @@ export async function salvarConfiguracaoPlantao(
 }
 
 export async function listarPlantoes(): Promise<PlantaoTI[]> {
-  const { data, error } = await supabase
-    .from("plantoes_ti")
-    .select("*")
-    .order("data", { ascending: true });
-  if (error) throw error;
-  return data ?? [];
+  if (!consultaPlantoes) consultaPlantoes = Promise.resolve(supabase.from("plantoes_ti").select("*").order("data", { ascending: true }).then(({ data, error }) => {
+    if (error) throw error;
+    return data ?? [];
+  }));
+  const consulta = consultaPlantoes;
+  try {
+    return await consulta;
+  } finally {
+    if (consultaPlantoes === consulta) consultaPlantoes = null;
+  }
 }
 
 export async function salvarPlantao(

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertCircle, CheckCircle2, Clock3, Headphones, Loader2, RefreshCw, Search, UserRound, UsersRound, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Headphones, Info, Loader2, RefreshCw, Search, ServerCrash, UserRound, UsersRound, X } from "lucide-react";
 import { carregarChamadosSults, nomeAssunto, SITUACOES, type ChamadoSultsAnalitico } from "../services/chamadosSults";
 import { useThemeContext } from "../hooks/ThemeContext";
 
@@ -10,12 +10,12 @@ function data(valor?: string) { return valor ? new Date(valor).toLocaleString("p
 
 export default function ChamadosPage() {
   const { dark } = useThemeContext();
-  const [chamados, setChamados] = useState<ChamadoSultsAnalitico[]>([]); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(""); const [cache, setCache] = useState(false);
+  const [chamados, setChamados] = useState<ChamadoSultsAnalitico[]>([]); const [loading, setLoading] = useState(true); const [erro, setErro] = useState(""); const [aviso, setAviso] = useState(""); const [cache, setCache] = useState(false);
   const [busca, setBusca] = useState(""); const [responsavel, setResponsavel] = useState("Todos"); const [assunto, setAssunto] = useState("Todos"); const [apoio, setApoio] = useState("Todos"); const [situacao, setSituacao] = useState("Todos");
-  const carregar = (refresh = false) => { setLoading(true); setErro(""); carregarChamadosSults(refresh).then((resultado) => { setChamados(resultado.data); setCache(resultado.cache); }).catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar chamados." )).finally(() => setLoading(false)); };
+  const carregar = (refresh = false) => { setLoading(true); setErro(""); setAviso(""); carregarChamadosSults(refresh).then((resultado) => { setChamados(resultado.data); setCache(resultado.cache); setAviso(resultado.stale ? `Exibindo a última consulta disponível. ${resultado.aviso ?? "A atualização não pôde ser concluída."}` : ""); }).catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar chamados." )).finally(() => setLoading(false)); };
   useEffect(() => {
     carregarChamadosSults()
-      .then((resultado) => { setChamados(resultado.data); setCache(resultado.cache); })
+      .then((resultado) => { setChamados(resultado.data); setCache(resultado.cache); setAviso(resultado.stale ? `Exibindo a última consulta disponível. ${resultado.aviso ?? "A atualização não pôde ser concluída."}` : ""); })
       .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar chamados."))
       .finally(() => setLoading(false));
   }, []);
@@ -28,8 +28,10 @@ export default function ChamadosPage() {
   const porResponsavel = agrupar(dados.map((item) => item.responsavel?.nome ?? "Sem responsável")).slice(0, 8); const porAssunto = agrupar(dados.map(nomeAssunto)).slice(0, 8); const porSituacao = agrupar(dados.map((item) => SITUACOES[item.situacao] ?? `Situação ${item.situacao}`));
   const tooltip = { backgroundColor: dark ? "#111827" : "#fff", border: `1px solid ${dark ? "#374151" : "#e5e7eb"}`, borderRadius: 8, fontSize: 12 };
 
+  const limiteAtingido = erro.toLocaleLowerCase("pt-BR").includes("limit") || erro.includes("429");
   return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Fluxo de chamados TI</h1><p className="page-subtitle">Análise operacional por responsável, assunto, situação e pessoas de apoio.</p></div><button type="button" onClick={() => carregar(true)} disabled={loading} className="btn-secondary flex items-center gap-2">{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Atualizar SULTS</button></div>
-    {erro && <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><div><p className="font-medium">Não foi possível consultar o SULTS</p><p className="mt-1 text-xs">{erro}</p></div></div>}
+    {aviso && <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><Info className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-semibold">Dados preservados no cache</p><p className="mt-1 text-xs leading-5">{aviso}</p></div></div>}
+    {erro && <div className="card mb-5 overflow-hidden border-amber-200"><div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><ServerCrash className="h-6 w-6" /></div><div className="min-w-0 flex-1"><p className="font-semibold text-gray-900">{limiteAtingido ? "A SULTS está limitando as consultas" : "Não foi possível consultar a SULTS"}</p><p className="mt-1 text-sm leading-6 text-gray-500">{limiteAtingido ? "A aplicação já está aguardando e repetindo as tentativas de forma controlada. Espere alguns instantes antes de atualizar novamente." : erro}</p></div><button type="button" onClick={() => carregar()} disabled={loading} className="btn-secondary flex shrink-0 items-center justify-center gap-2"><RefreshCw className="h-4 w-4" /> Tentar novamente</button></div>{limiteAtingido && <div className="border-t border-amber-100 bg-amber-50 px-6 py-3 text-xs text-amber-800"><AlertCircle className="mr-1.5 inline h-3.5 w-3.5" /> O servidor usa cache, espaçamento entre páginas e espera progressiva para evitar novas ocorrências.</div>}</div>}
     <div className="card mb-5 p-4"><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-7"><label className="relative sm:col-span-2"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input className="input pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar ID, título, solicitante, unidade ou departamento..." /></label><select className="input" value={responsavel} onChange={(e) => setResponsavel(e.target.value)}><option>Todos</option>{responsaveis.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={assunto} onChange={(e) => setAssunto(e.target.value)}><option>Todos</option>{assuntos.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={apoio} onChange={(e) => setApoio(e.target.value)}><option>Todos</option>{apoios.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={situacao} onChange={(e) => setSituacao(e.target.value)}><option value="Todos">Todos</option>{Object.entries(SITUACOES).map(([valor, nome]) => <option key={valor} value={valor}>{nome}</option>)}</select><button type="button" onClick={limpar} className="btn-secondary flex w-full items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button></div></div>
     <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[
       { label: "Chamados filtrados", value: dados.length, icon: Headphones, color: "bg-blue-50 text-blue-600" },

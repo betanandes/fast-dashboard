@@ -48,3 +48,32 @@ export async function carregarChamadosSults(refresh = false): Promise<{ data: Ch
   if (!resposta.ok) throw new Error(corpo?.erro ?? `Erro HTTP ${resposta.status}`);
   return { data: corpo?.data ?? [], cache: Boolean(corpo?.cache) };
 }
+
+function normalizar(valor: string) {
+  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("pt-BR");
+}
+
+function pessoasDoChamado(chamado: ChamadoSultsAnalitico) {
+  return [chamado.solicitante, chamado.responsavel, ...(chamado.apoio?.map((item) => item.pessoa) ?? [])]
+    .filter((pessoa): pessoa is PessoaChamado => Boolean(pessoa?.id && pessoa.nome));
+}
+
+export async function buscarPessoaSultsServidor(loginOuNome: string) {
+  const busca = normalizar(loginOuNome);
+  if (!busca) throw new Error("Informe o login ou nome usado no SULTS.");
+  const { data } = await carregarChamadosSults();
+  const pessoas = new Map<number, PessoaChamado>();
+  data.forEach((chamado) => pessoasDoChamado(chamado).forEach((pessoa) => pessoas.set(pessoa.id, pessoa)));
+  const candidatos = [...pessoas.values()];
+  const exato = candidatos.find((pessoa) => normalizar(pessoa.nome) === busca);
+  if (exato) return exato;
+  const parciais = candidatos.filter((pessoa) => normalizar(pessoa.nome).includes(busca));
+  if (parciais.length === 1) return parciais[0];
+  if (parciais.length > 1) throw new Error(`Encontramos mais de uma pessoa (${parciais.slice(0, 3).map((pessoa) => pessoa.nome).join(", ")}). Informe o nome completo.`);
+  throw new Error("Pessoa não encontrada nos chamados. Informe o ID manualmente ou confirme o nome exibido no SULTS.");
+}
+
+export async function listarChamadosNovosServidor(responsavelId?: number | null) {
+  const { data } = await carregarChamadosSults(true);
+  return data.filter((chamado) => chamado.situacao === 1 && (!responsavelId || chamado.responsavel?.id === responsavelId));
+}

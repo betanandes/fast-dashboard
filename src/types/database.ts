@@ -113,6 +113,11 @@ export interface Database {
         Insert: Record<string, unknown>
         Update: Record<string, unknown>
       }
+      provedores_ti: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+      }
     }
   }
 }

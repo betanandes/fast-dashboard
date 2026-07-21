@@ -63,6 +63,12 @@ supabase/migrations/20260722_cadastros_ti.sql
 Ele cria as tabelas de licenças, softwares e máquinas. Usuários autenticados
 podem consultar; somente perfis `admin` e `gestor` podem alterar ou excluir.
 
+Para habilitar o CRUD de provedores, execute também:
+
+```text
+supabase/migrations/20260723_provedores_ti.sql
+```
+
 ## Painel de chamados SULTS
 
 Em desenvolvimento, as variáveis `SULTS_*` do `.env` são lidas pelo proxy do

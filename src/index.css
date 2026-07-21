@@ -44,7 +44,7 @@
     @apply bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300;
   }
   .page {
-    @apply p-6 md:p-8 max-w-7xl mx-auto;
+    @apply w-full max-w-none p-4 md:p-6 xl:p-8;
   }
   .page-header {
     @apply flex items-center justify-between mb-6;

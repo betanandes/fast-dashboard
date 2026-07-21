@@ -48,14 +48,40 @@ export async function listarPlantoes(): Promise<PlantaoTI[]> {
 }
 
 export async function salvarPlantao(
-  plantao: Pick<PlantaoTI, "data" | "colaborador_nome" | "colaborador_email" | "telefone" | "observacao">,
+  plantao: Pick<PlantaoTI, "data" | "colaborador_nome" | "colaborador_email" | "telefone" | "observacao"> & { id?: string },
 ) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const payload = { ...plantao, created_by: user?.id ?? null };
-  const { error } = await supabase
-    .from("plantoes_ti")
-    .upsert(payload as never, { onConflict: "data" });
+  const { id, ...campos } = plantao;
+  const payload = { ...campos, created_by: user?.id ?? null };
+  const query = id && !id.startsWith("demo-")
+    ? supabase.from("plantoes_ti").update(payload as never).eq("id", id)
+    : supabase.from("plantoes_ti").upsert(payload as never, { onConflict: "data" });
+  const { error } = await query;
+  if (error) throw error;
+}
+
+export async function materializarPlantoes(plantoes: PlantaoTI[]) {
+  const existentes = await listarPlantoes();
+  if (existentes.length) return existentes;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const payload = plantoes.map((item) => ({
+    data: item.data,
+    colaborador_nome: item.colaborador_nome,
+    colaborador_email: item.colaborador_email,
+    telefone: item.telefone,
+    observacao: item.observacao,
+    created_by: user?.id ?? null,
+  }));
+  const { error } = await supabase.from("plantoes_ti").upsert(payload as never, { onConflict: "data" });
+  if (error) throw error;
+  return listarPlantoes();
+}
+
+export async function excluirPlantao(id: string) {
+  const { error } = await supabase.from("plantoes_ti").delete().eq("id", id);
   if (error) throw error;
 }

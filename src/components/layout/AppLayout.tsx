@@ -38,7 +38,14 @@ const NAV = [
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
-const ROTAS_TI = new Set(["/licencas", "/softwares", "/maquinas", "/provedores", "/chamados", "/plantao"]);
+const ROTAS_TI = new Set([
+  "/licencas",
+  "/softwares",
+  "/maquinas",
+  "/provedores",
+  "/chamados",
+  "/plantao",
+]);
 
 export default function AppLayout() {
   const { user, signOut } = useAuthContext();
@@ -100,10 +107,12 @@ export default function AppLayout() {
       `}
       >
         {/* Logo */}
-        <div className={`relative flex h-16 shrink-0 items-center border-b border-gray-200 ${collapsed ? "justify-center px-3" : "justify-between px-4"}`}>
+        <div
+          className={`relative flex h-16 shrink-0 items-center border-b border-gray-200 ${collapsed ? "justify-center px-3" : "justify-between px-4"}`}
+        >
           {!collapsed ? (
             <img
-              src="/logo.png"
+              src={dark ? "/logo-white.svg" : "/logo.png"}
               alt="Fast Sistemas Construtivos"
               className="h-7 w-auto object-contain"
             />
@@ -174,8 +183,16 @@ export default function AppLayout() {
             title={dark ? "Usar tema claro" : "Usar tema escuro"}
             aria-label={dark ? "Usar tema claro" : "Usar tema escuro"}
           >
-            {dark ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-gray-400" />}
-            {!collapsed && <span className="flex-1 text-left">{dark ? "Tema claro" : "Tema escuro"}</span>}
+            {dark ? (
+              <Sun className="h-4 w-4 text-amber-400" />
+            ) : (
+              <Moon className="h-4 w-4 text-gray-400" />
+            )}
+            {!collapsed && (
+              <span className="flex-1 text-left">
+                {dark ? "Tema claro" : "Tema escuro"}
+              </span>
+            )}
           </button>
           <div
             className={`flex items-center gap-2.5 rounded-xl px-2 py-2 ${collapsed ? "justify-center" : ""}`}
@@ -240,7 +257,9 @@ export default function AppLayout() {
       </aside>
 
       {/* Conteúdo */}
-      <main className={`flex-1 overflow-y-auto bg-gray-50 ${ROTAS_TI.has(location.pathname) ? "ti-workspace" : ""}`}>
+      <main
+        className={`flex-1 overflow-y-auto bg-gray-50 ${ROTAS_TI.has(location.pathname) ? "ti-workspace" : ""}`}
+      >
         <Outlet />
       </main>
     </div>

@@ -6,6 +6,9 @@ interface KPICardProps {
   sub?: string;
   icon: ReactNode;
   variant?: "default" | "danger" | "warning" | "success";
+  // Para leitores de tela — descrição completa opcional
+  // Ex: "Total acumulado: R$ 493k — 141 lançamentos"
+  ariaLabel?: string;
 }
 
 const valueColor = {
@@ -33,21 +36,47 @@ export default function KPICard({
   sub,
   icon,
   variant = "default",
+  ariaLabel,
 }: KPICardProps) {
+  // Se não passar ariaLabel, monta automaticamente com label + value + sub
+  const descricao = ariaLabel ?? [label, value, sub].filter(Boolean).join(": ");
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-shadow duration-200">
+    // article — semanticamente um item de informação independente
+    // aria-label — leitores de tela leem a descrição completa de uma vez
+    <article
+      className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-shadow duration-200"
+      aria-label={descricao}
+    >
+      {/* Ícone decorativo — aria-hidden pois o aria-label do article já descreve tudo */}
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg[variant]}`}
+        aria-hidden="true"
       >
         <span className={iconColor[variant]}>{icon}</span>
       </div>
+
       <div className="min-w-0 flex-1">
-        <p className="text-xs text-gray-500 mb-1">{label}</p>
-        <p className={`text-xl font-semibold truncate ${valueColor[variant]}`}>
+        {/* Label visível — aria-hidden porque o article já tem aria-label */}
+        <p className="text-xs text-gray-500 mb-1" aria-hidden="true">
+          {label}
+        </p>
+
+        {/* Valor principal */}
+        <p
+          className={`text-xl font-semibold truncate ${valueColor[variant]}`}
+          aria-hidden="true"
+        >
           {value}
         </p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+
+        {/* Subtítulo */}
+        {sub && (
+          <p className="text-xs text-gray-400 mt-0.5" aria-hidden="true">
+            {sub}
+          </p>
+        )}
       </div>
-    </div>
+    </article>
   );
 }

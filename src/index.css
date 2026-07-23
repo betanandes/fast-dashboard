@@ -1,48 +1,246 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────
+   VARIÁVEIS SEMÂNTICAS — base para acessibilidade
+   e troca de tema consistente
+───────────────────────────────────────────── */
 @layer base {
+  :root {
+    /* Superfícies */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-2: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-border-2: #cbd5e1;
+
+    /* Texto */
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94a3b8;
+    --color-text-inverted: #ffffff;
+
+    /* Brand */
+    --color-brand: #c41e23;
+    --color-brand-hover: #a01a1e;
+    --color-brand-soft: rgba(196, 30, 35, 0.08);
+
+    /* Semânticas */
+    --color-success: #16a34a;
+    --color-success-soft: rgba(22, 163, 74, 0.1);
+    --color-warning: #d97706;
+    --color-warning-soft: rgba(217, 119, 6, 0.1);
+    --color-danger: #dc2626;
+    --color-danger-soft: rgba(220, 38, 38, 0.1);
+    --color-info: #2563eb;
+    --color-info-soft: rgba(37, 99, 235, 0.1);
+
+    /* Sombras */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.1);
+
+    /* Foco — acessibilidade */
+    --color-focus: #c41e23;
+    --focus-ring: 0 0 0 3px rgba(196, 30, 35, 0.35);
+  }
+
+  .dark {
+    --color-bg: #030712;
+    --color-surface: #0f172a;
+    --color-surface-2: #1e293b;
+    --color-border: #1e293b;
+    --color-border-2: #334155;
+
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+    --color-text-inverted: #0f172a;
+
+    --color-brand: #e84444;
+    --color-brand-hover: #f28080;
+    --color-brand-soft: rgba(232, 68, 68, 0.14);
+
+    --color-success-soft: rgba(22, 163, 74, 0.15);
+    --color-warning-soft: rgba(217, 119, 6, 0.15);
+    --color-danger-soft: rgba(220, 38, 38, 0.15);
+    --color-info-soft: rgba(37, 99, 235, 0.15);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+
+    --color-focus: #f28080;
+    --focus-ring: 0 0 0 3px rgba(232, 68, 68, 0.4);
+  }
+
+  /* Transição global suave ao trocar tema */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
+  }
+  /* Exceção: não animar transforms e opacidade globalmente */
+  [class*="animate-"],
+  [class*="transition-"] {
+    transition-property: all;
+  }
+
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-200 dark:bg-gray-950 dark:text-gray-100;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  /* ── FOCO VISÍVEL — WCAG AA ── */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: 6px;
+  }
+
+  /* Remove outline padrão feio mas mantém acessibilidade via :focus-visible */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Skip link para leitores de tela */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--color-brand);
+    color: white;
+    font-weight: 600;
+    border-radius: 0 0 8px 8px;
+    transition: top 150ms;
+  }
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* Headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-text-primary);
+    line-height: 1.3;
   }
 }
 
+/* ─────────────────────────────────────────────
+   COMPONENTES
+───────────────────────────────────────────── */
 @layer components {
+  /* Botões */
   .btn-primary {
-    @apply bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg
+           px-4 py-2 text-sm text-white
+           disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.97];
+    background-color: var(--color-brand);
+    box-shadow: var(--shadow-sm);
+    transition:
+      background-color 150ms,
+      transform 100ms,
+      box-shadow 150ms;
   }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-brand-hover);
+    box-shadow: var(--shadow-md);
+  }
+  .btn-primary:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-lg
-           border border-gray-200 transition-all duration-150 active:scale-95
-           dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700;
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg
+           px-4 py-2 text-sm
+           disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.97];
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    transition:
+      background-color 150ms,
+      color 150ms,
+      box-shadow 150ms;
   }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-surface-2);
+    color: var(--color-text-primary);
+  }
+  .btn-secondary:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Inputs */
   .input {
-    @apply w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-900
-           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500
-           focus:border-transparent text-sm transition-all duration-150
-           dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500;
+    @apply w-full px-3 py-2 rounded-lg text-sm;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    transition:
+      border-color 150ms,
+      box-shadow 150ms;
   }
+  .input::placeholder {
+    color: var(--color-text-muted);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Cards */
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-800;
+    @apply rounded-xl;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
   }
+
+  /* Badges */
   .badge {
-    @apply inline-block text-xs font-medium px-2 py-0.5 rounded-full;
+    @apply inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full;
   }
   .badge-danger {
-    @apply bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300;
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
   }
   .badge-warn {
-    @apply bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300;
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
   }
   .badge-ok {
-    @apply bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300;
+    background-color: var(--color-success-soft);
+    color: var(--color-success);
   }
   .badge-info {
-    @apply bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300;
+    background-color: var(--color-info-soft);
+    color: var(--color-info);
   }
+
+  /* Layout */
   .page {
     @apply w-full max-w-none p-4 md:p-6 xl:p-8;
   }
@@ -50,44 +248,159 @@
     @apply flex items-center justify-between mb-6;
   }
   .page-title {
-    @apply text-xl font-semibold text-gray-900 dark:text-gray-100;
+    @apply text-xl font-semibold;
+    color: var(--color-text-primary);
   }
   .page-subtitle {
-    @apply text-sm text-gray-500 mt-0.5 dark:text-gray-400;
+    @apply text-sm mt-0.5;
+    color: var(--color-text-secondary);
+  }
+
+  /* Divisor */
+  .divider {
+    border-color: var(--color-border);
+  }
+
+  /* Tabelas semânticas */
+  .table-header {
+    background-color: var(--color-surface-2);
+    color: var(--color-text-muted);
+    @apply text-xs font-medium uppercase tracking-wide;
+  }
+  .table-row {
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 120ms;
+  }
+  .table-row:hover {
+    background-color: var(--color-surface-2);
   }
 }
 
-/* Harmoniza utilitários usados nas telas existentes sem duplicar variantes em
-   centenas de elementos. Cores semânticas continuam preservadas. */
-.dark .bg-white { background-color: #111827; }
-.dark .bg-gray-50 { background-color: #030712; }
-.dark .bg-gray-100 { background-color: #1f2937; }
-.dark .bg-gray-900 { background-color: #111827; }
-.dark .border-gray-50,
+/* ─────────────────────────────────────────────
+   OVERRIDES DARK MODE — apenas o necessário
+   (sem sobrescrever classes Tailwind em massa)
+───────────────────────────────────────────── */
+.dark .bg-white {
+  background-color: var(--color-surface) !important;
+}
+.dark .bg-gray-50 {
+  background-color: var(--color-bg) !important;
+}
+.dark .bg-gray-100 {
+  background-color: var(--color-surface-2) !important;
+}
 .dark .border-gray-100,
-.dark .border-gray-200 { border-color: #1f2937; }
-.dark .text-gray-900 { color: #f9fafb; }
-.dark .text-gray-800,
-.dark .text-gray-700 { color: #e5e7eb; }
-.dark .text-gray-600 { color: #d1d5db; }
-.dark .text-gray-500 { color: #9ca3af; }
-.dark .text-gray-400 { color: #9ca3af; }
-.dark .bg-brand-50 { background-color: rgba(196, 30, 35, 0.14); }
-.dark .bg-red-50 { background-color: rgba(127, 29, 29, 0.24); }
-.dark .bg-red-100 { background-color: rgba(127, 29, 29, 0.34); }
-.dark .bg-amber-50 { background-color: rgba(120, 53, 15, 0.22); }
-.dark .bg-amber-100 { background-color: rgba(120, 53, 15, 0.32); }
-.dark .bg-green-50 { background-color: rgba(20, 83, 45, 0.22); }
-.dark .bg-green-100 { background-color: rgba(20, 83, 45, 0.32); }
-.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.22); }
-.dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.32); }
+.dark .border-gray-200 {
+  border-color: var(--color-border) !important;
+}
+.dark .text-gray-900 {
+  color: var(--color-text-primary) !important;
+}
+.dark .text-gray-700,
+.dark .text-gray-800 {
+  color: var(--color-text-secondary) !important;
+}
+.dark .text-gray-500,
+.dark .text-gray-600 {
+  color: var(--color-text-muted) !important;
+}
+.dark .bg-brand-50 {
+  background-color: var(--color-brand-soft) !important;
+}
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: var(--color-danger-soft) !important;
+}
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: var(--color-warning-soft) !important;
+}
+.dark .bg-green-50,
+.dark .bg-green-100 {
+  background-color: var(--color-success-soft) !important;
+}
+.dark .bg-blue-50,
+.dark .bg-blue-100 {
+  background-color: var(--color-info-soft) !important;
+}
 .dark .hover\:bg-gray-50:hover,
-.dark .hover\:bg-gray-100:hover { background-color: #1f2937; }
-.dark .shadow-sm,
-.dark .shadow-md,
-.dark .shadow-lg { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--color-surface-2) !important;
+}
+.dark .shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+.dark .shadow-md {
+  box-shadow: var(--shadow-md) !important;
+}
 
-/* Scrollbar */
+/* ─────────────────────────────────────────────
+   TI WORKSPACE — área de gestão
+───────────────────────────────────────────── */
+.ti-workspace {
+  background-image:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(196, 30, 35, 0.06),
+      transparent 28rem
+    ),
+    linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg) 100%);
+}
+.ti-workspace .page-header {
+  @apply rounded-2xl p-5;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+.ti-workspace .page-title {
+  @apply text-2xl font-semibold tracking-tight;
+}
+.ti-workspace .card {
+  @apply rounded-2xl;
+  box-shadow: var(--shadow-md);
+}
+.ti-workspace .input {
+  @apply rounded-xl;
+}
+.ti-workspace table thead {
+  @apply sticky top-0 z-10;
+}
+.ti-workspace table tbody tr {
+  transition: background-color 120ms ease;
+}
+.dark .ti-workspace {
+  background-image:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(196, 30, 35, 0.1),
+      transparent 28rem
+    ),
+    linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg) 100%);
+}
+.dark .ti-workspace .page-header {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+.dark .ti-workspace .card {
+  box-shadow: var(--shadow-lg);
+}
+.dark .ti-workspace .input {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-2);
+  color: var(--color-text-primary);
+  color-scheme: dark;
+}
+.dark .ti-workspace .input::placeholder {
+  color: var(--color-text-muted);
+}
+.dark .ti-workspace select.input option {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -96,73 +409,127 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border-2);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--color-text-muted);
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  scrollbar-color: var(--color-border-2) transparent;
 }
 
-/* Acabamento visual exclusivo para o espaço de gestão de TI. */
-.ti-workspace {
-  background-image:
-    radial-gradient(circle at 92% 0%, rgba(196, 30, 35, 0.07), transparent 28rem),
-    linear-gradient(180deg, #f8fafc 0%, #f3f4f6 100%);
+/* ─────────────────────────────────────────────
+   ACESSIBILIDADE — redução de movimento
+───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-.ti-workspace .page {
-  min-height: 100%;
-}
-.ti-workspace .page-header {
-  @apply rounded-2xl border border-gray-200 bg-white p-5 shadow-sm;
-}
-.ti-workspace .page-title {
-  @apply text-2xl font-semibold tracking-tight;
-}
-.ti-workspace .card {
-  @apply rounded-2xl border-gray-200/90 shadow-sm;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 28px rgba(15, 23, 42, 0.035);
-}
-.ti-workspace .input {
-  @apply rounded-xl bg-white/90;
-}
-.ti-workspace table thead {
-  @apply sticky top-0 z-10;
-}
-.ti-workspace table tbody tr {
-  transition: background-color 150ms ease;
-}
-.dark .ti-workspace {
-  background-image:
-    radial-gradient(circle at 92% 0%, rgba(196, 30, 35, 0.11), transparent 28rem),
-    linear-gradient(180deg, #0b1120 0%, #030712 100%);
-}
-.dark .ti-workspace .page-header {
-  background-color: rgba(17, 24, 39, 0.9);
-  border-color: #1f2937;
-}
-.dark .ti-workspace .card {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-}
-.dark .ti-workspace .input {
-  background-color: #111827;
-  border-color: #374151;
-  color: #f9fafb;
-  color-scheme: dark;
-}
-.dark .ti-workspace .input::placeholder {
-  color: #6b7280;
-}
-.dark .ti-workspace select.input option {
-  background-color: #111827;
-  color: #f9fafb;
+
+/* Alto contraste */
+@media (forced-colors: active) {
+  .btn-primary,
+  .btn-secondary {
+    border: 2px solid ButtonText;
+  }
+  .card {
+    border: 1px solid ButtonText;
+  }
 }
 
 @media (max-width: 767px) {
   .ti-workspace .page-header {
     @apply items-start gap-4;
   }
+}
+
+/* ─────────────────────────────────────────────
+   ALTO CONTRASTE
+───────────────────────────────────────────── */
+.high-contrast {
+  --color-text-primary: #000000;
+  --color-text-secondary: #1a1a1a;
+  --color-text-muted: #333333;
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f0f0;
+  --color-border: #000000;
+  --color-border-2: #000000;
+  --color-brand: #8b0000;
+  --color-brand-soft: rgba(139, 0, 0, 0.12);
+  --focus-ring: 0 0 0 3px #000000;
+}
+.high-contrast.dark {
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0e0;
+  --color-text-muted: #cccccc;
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-surface-2: #1a1a1a;
+  --color-border: #ffffff;
+  --color-brand: #ff6b6b;
+  --focus-ring: 0 0 0 3px #ffffff;
+}
+.high-contrast * {
+  letter-spacing: 0.01em;
+}
+.high-contrast .card {
+  border-width: 2px;
+}
+.high-contrast button,
+.high-contrast a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.high-contrast .btn-primary,
+.high-contrast .btn-secondary {
+  text-decoration: none;
+}
+
+/* ─────────────────────────────────────────────
+   CORREÇÃO CARDS ESCUROS FIXOS NO LIGHT MODE
+   (Plantão, Softwares, Dashboard widget)
+───────────────────────────────────────────── */
+
+/* Card "Próximo plantonista" e similares com bg-gray-900 fixo */
+:not(.dark) .bg-gray-900:not(.card):not(.input) {
+  background-color: var(--color-surface-2) !important;
+  color: var(--color-text-primary) !important;
+}
+:not(.dark) .bg-gray-800 {
+  background-color: var(--color-surface-2) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Textos brancos fixos que ficam invisíveis no light mode */
+:not(.dark)
+  .text-white:not(.btn-primary *):not([class*="bg-brand"]):not(
+    [class*="bg-red"]
+  ) {
+  color: var(--color-text-primary) !important;
+}
+:not(.dark) .text-gray-100,
+:not(.dark) .text-gray-200,
+:not(.dark) .text-gray-300 {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Avatar iniciais com fundo escuro fixo */
+:not(.dark) [class*="bg-gray-700"],
+:not(.dark) [class*="bg-gray-800"],
+:not(.dark) [class*="bg-gray-900"]:not(.card) {
+  background-color: var(--color-surface-2) !important;
+}
+
+/* Bordas escuras fixas */
+:not(.dark) .border-gray-700,
+:not(.dark) .border-gray-800 {
+  border-color: var(--color-border) !important;
 }

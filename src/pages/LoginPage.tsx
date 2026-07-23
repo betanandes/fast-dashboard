@@ -43,7 +43,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Limpa verificação MFA anterior para exigir novo código a cada login
     sessionStorage.removeItem("mfa_verificado");
     navigate("/dashboard");
   }
@@ -73,7 +72,7 @@ export default function LoginPage() {
         tipo: "erro",
         texto: limite
           ? "Limite de tentativas atingido. Aguarde 60 minutos e tente novamente."
-          : "ível enviar o e-mail. Verifique o endereço e tente novamente.",
+          : "Não foi possível enviar o e-mail. Verifique o endereço e tente novamente.",
       });
     } else {
       setResetMsg({
@@ -85,42 +84,48 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    // role="main" + id para o skip link funcionar
+    <main
+      id="main-content"
+      className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
+      // Garante que leitores de tela anunciem a página corretamente
+    >
       <div className="w-full max-w-sm">
+        {/* Cabeçalho — logo e título */}
         <div className="text-center mb-8">
-          {/* <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-xl mb-4">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div> */}
           <img
             src="/logo.png"
             alt="Fast Sistemas Construtivos"
-            className="h-12 w-auto object-contain mx-auto mb-2"
+            className="h-12 w-auto object-contain mx-auto mb-4"
           />
+          {/* h1 visível para leitores de tela identificarem a página */}
           <h1 className="text-xl font-semibold text-gray-900">Dashboard TI</h1>
-          {/* <p className="text-sm text-gray-500 mt-1">
-            Fast Sistemas Construtivos
-          </p> */}
+          <p className="text-sm text-gray-500 mt-1">
+            Acesse com suas credenciais corporativas
+          </p>
         </div>
 
+        {/* Formulário de login */}
         <div className="card p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            noValidate
+            aria-label="Formulário de acesso"
+          >
+            {/* Campo e-mail — label associado via htmlFor/id */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
                 E-mail corporativo
+                <span aria-hidden="true" className="text-brand-600 ml-0.5">
+                  *
+                </span>
               </label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => {
@@ -128,19 +133,30 @@ export default function LoginPage() {
                   setResetMsg(null);
                 }}
                 className="input"
-                placeholder="seunome@fast.com.br"
+                placeholder="seunome@cscempresarial.com.br"
                 autoComplete="email"
                 required
+                aria-required="true"
+                aria-invalid={error ? "true" : "false"}
+                aria-describedby={error ? "login-error" : undefined}
                 disabled={loading}
               />
             </div>
 
+            {/* Campo senha */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
                 Senha
+                <span aria-hidden="true" className="text-brand-600 ml-0.5">
+                  *
+                </span>
               </label>
               <div className="relative">
                 <input
+                  id="password"
                   type={showPass ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -148,26 +164,39 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
+                  aria-required="true"
+                  aria-invalid={error ? "true" : "false"}
                   disabled={loading}
                 />
+                {/* Botão mostrar/ocultar com label descritivo para leitores de tela */}
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded"
+                  aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+                  aria-pressed={showPass}
                 >
                   {showPass ? (
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff className="w-4 h-4" aria-hidden="true" />
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
             </div>
 
+            {/* Mensagem de erro — aria-live para leitores de tela anunciarem */}
             {error && (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+              <div
+                id="login-error"
+                role="alert"
+                aria-live="assertive"
+                className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-lg"
+              >
+                <AlertCircle
+                  className="w-4 h-4 text-red-500 mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
@@ -175,9 +204,12 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-primary w-full"
+              aria-busy={loading}
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading && (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              )}
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
@@ -189,19 +221,25 @@ export default function LoginPage() {
             type="button"
             onClick={handleReset}
             disabled={loadingReset}
-            className="w-full flex items-center justify-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium py-2 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium py-2 transition-colors disabled:opacity-50 rounded-lg"
+            aria-busy={loadingReset}
           >
             {loadingReset ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2
+                className="w-3.5 h-3.5 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
-              <Mail className="w-3.5 h-3.5" />
+              <Mail className="w-3.5 h-3.5" aria-hidden="true" />
             )}
             {loadingReset ? "Enviando..." : "Esqueci minha senha"}
           </button>
 
-          {/* Feedback do reset — estilizado */}
+          {/* Feedback do reset — aria-live polite para não interromper o usuário */}
           {resetMsg && (
             <div
+              role="status"
+              aria-live="polite"
               className={`flex items-start gap-2 p-3 rounded-lg border text-sm ${
                 resetMsg.tipo === "sucesso"
                   ? "bg-green-50 border-green-100 text-green-700"
@@ -209,19 +247,28 @@ export default function LoginPage() {
               }`}
             >
               {resetMsg.tipo === "sucesso" ? (
-                <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <CheckCircle
+                  className="w-4 h-4 mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
               ) : (
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <AlertCircle
+                  className="w-4 h-4 mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
               )}
               <p>{resetMsg.texto}</p>
             </div>
           )}
 
           <p className="text-center text-xs text-gray-400">
-            Problemas de acesso? Fale com o TI.
+            Problemas de acesso?{" "}
+            <span aria-label="Entre em contato com o departamento de TI">
+              Fale com o TI.
+            </span>
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

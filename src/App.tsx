@@ -17,6 +17,7 @@ import SoftwaresPage from "./pages/SoftwaresPage";
 import PlantaoPage from "./pages/PlantaoPage";
 import ProvedoresPage from "./pages/ProvedoresPage";
 import ChamadosPage from "./pages/ChamadosPage";
+import GamificacaoPage from "./pages/GamificacaoPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/plantao" element={<PlantaoPage />} />
                 <Route path="/provedores" element={<ProvedoresPage />} />
                 <Route path="/chamados" element={<ChamadosPage />} />
+                <Route path="/gamificacao" element={<GamificacaoPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
                 <Route
                   path="/importar"

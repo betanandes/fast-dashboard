@@ -13,9 +13,19 @@ export interface Fornecedor {
   ativo: boolean;
 }
 
+let tabelaIndisponivel = false;
+const mensagemTabela = "A tabela public.fornecedores ainda não existe no Supabase. Execute a migration 20260728_telas_ti_fornecedores.sql no SQL Editor.";
+
 export async function listarFornecedores() {
+  if (tabelaIndisponivel) throw new Error(mensagemTabela);
   const { data, error } = await supabase.from("fornecedores").select("*").order("nome_fantasia");
-  if (error) throw error;
+  if (error) {
+    if ((error as { code?: string }).code === "PGRST205" || error.message.includes("schema cache")) {
+      tabelaIndisponivel = true;
+      throw new Error(mensagemTabela);
+    }
+    throw error;
+  }
   return (data ?? []) as Fornecedor[];
 }
 

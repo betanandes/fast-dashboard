@@ -11,6 +11,8 @@ export interface ChamadoSultsAnalitico {
   situacao: number;
   tipo?: number;
   aberto?: string;
+  concluido?: string;
+  resolvido?: string;
   ultimaAlteracao?: string;
   primeiraInteracao?: string;
   countInteracaoPublico?: number;
@@ -19,6 +21,7 @@ export interface ChamadoSultsAnalitico {
   responsavel?: PessoaChamado;
   unidade?: { id: number; nome?: string; nomeFantasia?: string };
   departamento?: { id: number; nome: string };
+  departamentoEnvio?: { id: number; nome: string };
   assunto?: { id: number; nome?: string; assunto?: string };
   apoio?: Array<{ pessoa?: PessoaChamado; departamento?: { id: number; nome: string } }>;
 }
@@ -101,28 +104,27 @@ export async function carregarChamadosSults(opcoes: boolean | OpcoesConsultaCham
   }
 }
 
-function normalizar(valor: string) {
-  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("pt-BR");
-}
-
-function pessoasDoChamado(chamado: ChamadoSultsAnalitico) {
-  return [chamado.solicitante, chamado.responsavel, ...(chamado.apoio?.map((item) => item.pessoa) ?? [])]
-    .filter((pessoa): pessoa is PessoaChamado => Boolean(pessoa?.id && pessoa.nome));
-}
-
 export async function buscarPessoaSultsServidor(loginOuNome: string) {
-  const busca = normalizar(loginOuNome);
-  if (!busca) throw new Error("Informe o login ou nome usado no SULTS.");
-  const { data } = await carregarChamadosSults();
-  const pessoas = new Map<number, PessoaChamado>();
-  data.forEach((chamado) => pessoasDoChamado(chamado).forEach((pessoa) => pessoas.set(pessoa.id, pessoa)));
-  const candidatos = [...pessoas.values()];
-  const exato = candidatos.find((pessoa) => normalizar(pessoa.nome) === busca);
-  if (exato) return exato;
-  const parciais = candidatos.filter((pessoa) => normalizar(pessoa.nome).includes(busca));
-  if (parciais.length === 1) return parciais[0];
-  if (parciais.length > 1) throw new Error(`Encontramos mais de uma pessoa (${parciais.slice(0, 3).map((pessoa) => pessoa.nome).join(", ")}). Informe o nome completo.`);
-  throw new Error("Pessoa não encontrada nos chamados. Informe o ID manualmente ou confirme o nome exibido no SULTS.");
+  if (!loginOuNome.trim()) throw new Error("Informe o login ou nome usado no SULTS.");
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Usuário não autenticado.");
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 15_000);
+  try {
+    const resposta = await fetch(`/api/sults/person?q=${encodeURIComponent(loginOuNome.trim())}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      signal: controller.signal,
+    });
+    const corpo = await resposta.json().catch(() => null) as (PessoaChamado & { erro?: string }) | null;
+    if (!resposta.ok) throw new Error(corpo?.erro ?? `Erro HTTP ${resposta.status}`);
+    if (!corpo?.id || !corpo.nome) throw new Error("A SULTS retornou uma resposta inválida.");
+    return corpo;
+  } catch (erro) {
+    if (erro instanceof DOMException && erro.name === "AbortError") throw new Error("A consulta excedeu 15 segundos. Tente novamente.", { cause: erro });
+    throw erro;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 export async function listarChamadosNovosServidor(responsavelId?: number | null) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuthContext } from "../hooks/AuthContext";
 import { supabase } from "../lib/supabase";
+import Turnstile, { type TurnstileHandle } from "../components/auth/Turnstile";
 
 export default function LoginPage() {
   const { signIn } = useAuthContext();
@@ -26,6 +27,10 @@ export default function LoginPage() {
     tipo: "sucesso" | "erro";
     texto: string;
   } | null>(null);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstile = useRef<TurnstileHandle | null>(null);
+  const receberCaptcha = useCallback((token: string) => setCaptchaToken(token), []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,13 +38,19 @@ export default function LoginPage() {
     setResetMsg(null);
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    if (turnstileSiteKey && !captchaToken) {
+      setError("Conclua a verificação de segurança para entrar.");
+      setLoading(false);
+      return;
+    }
+    const { error } = await signIn(email, password, captchaToken);
 
     if (error) {
       setError(
         "E-mail ou senha incorretos. Verifique os dados e tente novamente.",
       );
       setLoading(false);
+      turnstile.current?.reset();
       return;
     }
 
@@ -55,12 +66,18 @@ export default function LoginPage() {
       });
       return;
     }
+    if (turnstileSiteKey && !captchaToken) {
+      setResetMsg({ tipo: "erro", texto: "Conclua a verificação de segurança antes de redefinir a senha." });
+      return;
+    }
     setLoadingReset(true);
     setResetMsg(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken: captchaToken || undefined,
     });
+    turnstile.current?.reset();
 
     if (error) {
       const msg = (error as { message?: string }).message ?? "";
@@ -143,6 +160,10 @@ export default function LoginPage() {
               />
             </div>
 
+            {turnstileSiteKey && (
+              <Turnstile siteKey={turnstileSiteKey} onToken={receberCaptcha} handle={turnstile} />
+            )}
+
             {/* Campo senha */}
             <div>
               <label
@@ -203,7 +224,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || !email || !password || Boolean(turnstileSiteKey && !captchaToken)}
               className="btn-primary w-full"
               aria-busy={loading}
             >

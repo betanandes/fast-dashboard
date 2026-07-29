@@ -17,12 +17,14 @@ import {
   Moon,
   Sun,
   Tickets,
+  Trophy,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
 import { supabase } from "../../lib/supabase";
 import { useEffect, useState } from "react";
 import { useThemeContext } from "../../hooks/ThemeContext";
+import SoundSettings from "../ui/SoundSettings";
 
 const NAV = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Visão geral" },
@@ -33,6 +35,7 @@ const NAV = [
   { to: "/provedores", icon: Wifi, label: "Provedores" },
   { to: "/chamados", icon: Tickets, label: "Chamados TI" },
   { to: "/plantao", icon: CalendarDays, label: "Plantão" },
+  { to: "/gamificacao", icon: Trophy, label: "Jornada TI" },
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
@@ -42,6 +45,7 @@ const ROTAS_TI = new Set([
   "/provedores",
   "/chamados",
   "/plantao",
+  "/gamificacao",
 ]);
 
 export default function AppLayout() {
@@ -259,6 +263,7 @@ export default function AppLayout() {
       >
         <Outlet />
       </main>
+      <SoundSettings />
     </div>
   );
 }

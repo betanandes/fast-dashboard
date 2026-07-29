@@ -16,6 +16,7 @@ import {
 } from "../services/dashboard";
 import type { Pagamento } from "../types/database";
 import { excluirFornecedor, listarFornecedores, salvarFornecedor, type Fornecedor } from "../services/fornecedores";
+import FornecedorActions from "../components/fornecedores/FornecedorActions";
 
 function fmtMoeda(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -344,7 +345,7 @@ export default function FornecedoresPage() {
               ) : (
                 <>
                   <div className="p-4 border-b border-gray-100">
-                    <div className="flex items-start gap-3 mb-4">
+                    <div className="flex flex-wrap items-start gap-3 mb-4">
                       <Building2 className="w-5 h-5 text-brand-500 mt-0.5 shrink-0" />
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900">
@@ -355,6 +356,7 @@ export default function FornecedoresPage() {
                           {fmtMoeda(fSelecionado?.total_valor ?? 0)} total
                         </p>
                       </div>
+                      <FornecedorActions nome={selecionado} fornecedor={cadastros.find((item) => item.nome_fantasia === selecionado)} />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="bg-red-50 rounded-lg p-2.5">

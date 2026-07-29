@@ -5,7 +5,7 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ data: unknown; error: unknown }>
   signOut: () => Promise<void>
 }
 

@@ -12,7 +12,6 @@ import {
   Settings,
   BadgeCheck,
   AppWindow,
-  MonitorCog,
   CalendarDays,
   Wifi,
   Moon,
@@ -31,7 +30,6 @@ const NAV = [
   { to: "/fornecedores", icon: Building2, label: "Fornecedores" },
   { to: "/licencas", icon: BadgeCheck, label: "Licenças" },
   { to: "/softwares", icon: AppWindow, label: "Softwares" },
-  { to: "/maquinas", icon: MonitorCog, label: "Máquinas" },
   { to: "/provedores", icon: Wifi, label: "Provedores" },
   { to: "/chamados", icon: Tickets, label: "Chamados TI" },
   { to: "/plantao", icon: CalendarDays, label: "Plantão" },
@@ -41,7 +39,6 @@ const NAV = [
 const ROTAS_TI = new Set([
   "/licencas",
   "/softwares",
-  "/maquinas",
   "/provedores",
   "/chamados",
   "/plantao",

@@ -36,6 +36,17 @@ export function nomeAssunto(chamado: ChamadoSultsAnalitico) {
   return chamado.assunto?.nome ?? chamado.assunto?.assunto ?? "Sem assunto";
 }
 
+function normalizarDepartamento(valor: string) {
+  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("pt-BR");
+}
+
+export function ehDepartamentoTi(chamado: ChamadoSultsAnalitico) {
+  const nome = normalizarDepartamento(chamado.departamento?.nome ?? "");
+  return nome === "ti"
+    || nome === "tecnologia da informacao"
+    || nome === "tecnologia de informacao";
+}
+
 export interface ResultadoChamadosSults {
   data: ChamadoSultsAnalitico[];
   cache: boolean;
@@ -51,8 +62,13 @@ export interface OpcoesConsultaChamados {
 
 const requisicoesEmAndamento = new Map<string, Promise<ResultadoChamadosSults>>();
 
-function dataUtc(valor: string, fimDoDia = false) {
-  return new Date(`${valor}T${fimDoDia ? "23:59:59.999" : "00:00:00.000"}`).toISOString();
+function dataSults(valor: string, fimDoDia = false) {
+  // A API exige ISO 8601 UTC no formato exato "YYYY-MM-DDTHH:mm:ssZ".
+  // O Date converte os limites do dia local para UTC; a substituição remove
+  // os milissegundos, que não são aceitos pelo filtro da SULTS.
+  return new Date(`${valor}T${fimDoDia ? "23:59:59" : "00:00:00"}`)
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 async function executarConsulta(opcoes: OpcoesConsultaChamados): Promise<ResultadoChamadosSults> {
@@ -62,8 +78,8 @@ async function executarConsulta(opcoes: OpcoesConsultaChamados): Promise<Resulta
   if (!session) throw new Error("Usuário não autenticado.");
   const parametros = new URLSearchParams();
   if (opcoes.refresh) parametros.set("refresh", "true");
-  if (opcoes.inicio) parametros.set("abertoStart", dataUtc(opcoes.inicio));
-  if (opcoes.fim) parametros.set("abertoEnd", dataUtc(opcoes.fim, true));
+  if (opcoes.inicio) parametros.set("abertoStart", dataSults(opcoes.inicio));
+  if (opcoes.fim) parametros.set("abertoEnd", dataSults(opcoes.fim, true));
   const url = `/api/sults/tickets${parametros.size ? `?${parametros}` : ""}`;
   const resposta = await fetch(url, {
     headers: { Authorization: `Bearer ${session.access_token}` },

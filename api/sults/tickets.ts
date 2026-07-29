@@ -1,4 +1,4 @@
-import { buscarTodosChamados, validarSessaoSupabase, type SultsServerEnv } from "../../server/sultsTickets";
+import { buscarTodosChamados, ErroSults, validarSessaoSupabase, type SultsServerEnv } from "../../server/sultsTickets";
 
 interface RequestLike {
   method?: string;
@@ -30,6 +30,7 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
     res.setHeader("Cache-Control", "private, no-store");
     return res.status(200).json(resultado);
   } catch (erro) {
-    return res.status(502).json({ erro: erro instanceof Error ? erro.message : String(erro) });
+    const status = erro instanceof ErroSults && erro.status >= 400 && erro.status < 500 ? erro.status : 502;
+    return res.status(status).json({ erro: erro instanceof Error ? erro.message : String(erro) });
   }
 }

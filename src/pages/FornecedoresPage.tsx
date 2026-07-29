@@ -5,12 +5,17 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
   buscarTodosFornecedores,
   buscarPagamentos,
 } from "../services/dashboard";
 import type { Pagamento } from "../types/database";
+import { excluirFornecedor, listarFornecedores, salvarFornecedor, type Fornecedor } from "../services/fornecedores";
 
 function fmtMoeda(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,6 +39,9 @@ interface FornecedorDetalhe {
 const POR_PAGINA = 10;
 
 export default function FornecedoresPage() {
+  const [cadastros, setCadastros] = useState<Fornecedor[]>([]);
+  const [form, setForm] = useState<(Omit<Fornecedor, "id"> & { id?: string }) | null>(null);
+  const [erroCadastro, setErroCadastro] = useState("");
   const [fornecedores, setFornecedores] = useState<FornecedorDetalhe[]>([]);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
@@ -73,6 +81,33 @@ export default function FornecedoresPage() {
     carregar();
   }, []);
 
+  useEffect(() => {
+    listarFornecedores().then(setCadastros).catch((erro) => setErroCadastro(erro instanceof Error ? erro.message : "Erro ao carregar fornecedores."));
+  }, []);
+
+  const novoFornecedor = () => setForm({ razao_social: "", nome_fantasia: "", cnpj: "", email: "", telefone: "", contato: "", site: "", observacao: "", ativo: true });
+  const gravarFornecedor = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form) return;
+    setErroCadastro("");
+    try {
+      await salvarFornecedor(form);
+      setCadastros(await listarFornecedores());
+      setForm(null);
+    } catch (erro) {
+      setErroCadastro(erro instanceof Error ? erro.message : "Erro ao salvar fornecedor.");
+    }
+  };
+  const removerFornecedor = async (item: Fornecedor) => {
+    if (!window.confirm(`Excluir o fornecedor ${item.nome_fantasia}?`)) return;
+    try {
+      await excluirFornecedor(item.id);
+      setCadastros(await listarFornecedores());
+    } catch (erro) {
+      setErroCadastro(erro instanceof Error ? erro.message : "O fornecedor possui vínculos e não pode ser excluído.");
+    }
+  };
+
   async function verDetalhe(fornecedor: string) {
     setSelecionado(fornecedor);
     setLoadingDetalhe(true);
@@ -108,7 +143,31 @@ export default function FornecedoresPage() {
             fornecedores
           </p>
         </div>
+        <button type="button" onClick={novoFornecedor} className="btn-primary flex items-center gap-2"><Plus className="h-4 w-4" /> Novo fornecedor</button>
       </div>
+
+      <section className="card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div><h2 className="text-sm font-semibold text-gray-900">Cadastro mestre</h2><p className="mt-1 text-xs text-gray-500">Fonte única usada nos pagamentos, licenças, softwares e provedores.</p></div>
+          <span className="text-xs text-gray-400">{cadastros.length} cadastro(s)</span>
+        </div>
+        {erroCadastro && <p className="border-b border-red-100 bg-red-50 px-5 py-3 text-xs text-red-700">{erroCadastro}</p>}
+        {form && <form onSubmit={gravarFornecedor} className="grid gap-3 border-b border-gray-100 bg-gray-50 p-5 md:grid-cols-2 xl:grid-cols-4">
+          <label><span className="mb-1 block text-xs text-gray-600">Razão social *</span><input required className="input" value={form.razao_social} onChange={(e) => setForm({ ...form, razao_social: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">Nome fantasia *</span><input required className="input" value={form.nome_fantasia} onChange={(e) => setForm({ ...form, nome_fantasia: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">CNPJ</span><input className="input" value={form.cnpj ?? ""} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">Contato</span><input className="input" value={form.contato ?? ""} onChange={(e) => setForm({ ...form, contato: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">E-mail</span><input type="email" className="input" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">Telefone</span><input className="input" value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></label>
+          <label><span className="mb-1 block text-xs text-gray-600">Site</span><input type="url" className="input" value={form.site ?? ""} onChange={(e) => setForm({ ...form, site: e.target.value })} /></label>
+          <div className="flex items-end gap-2"><button className="btn-primary flex-1" type="submit">Salvar</button><button className="btn-secondary" type="button" onClick={() => setForm(null)}><X className="h-4 w-4" /></button></div>
+        </form>}
+        <div className="max-h-80 overflow-auto">
+          <table className="w-full min-w-[720px] text-left text-xs"><thead className="sticky top-0 bg-gray-50 uppercase text-gray-500"><tr><th className="px-5 py-3">Fornecedor</th><th className="px-4 py-3">CNPJ</th><th className="px-4 py-3">Contato</th><th className="px-4 py-3">Status</th><th className="px-4 py-3" /></tr></thead>
+          <tbody>{cadastros.map((item) => <tr key={item.id} className="border-t border-gray-100"><td className="px-5 py-3"><p className="font-semibold text-gray-900">{item.nome_fantasia}</p><p className="text-gray-400">{item.razao_social}</p></td><td className="px-4 py-3 text-gray-600">{item.cnpj || "—"}</td><td className="px-4 py-3 text-gray-600">{item.contato || item.email || item.telefone || "—"}</td><td className="px-4 py-3"><span className={`badge ${item.ativo ? "badge-ok" : "badge-warn"}`}>{item.ativo ? "Ativo" : "Inativo"}</span></td><td className="px-4 py-3"><div className="flex justify-end gap-1"><button type="button" onClick={() => setForm(item)} className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"><Pencil className="h-4 w-4" /></button><button type="button" onClick={() => void removerFornecedor(item)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></div></td></tr>)}</tbody></table>
+          {!cadastros.length && <p className="p-8 text-center text-sm text-gray-400">Nenhum fornecedor cadastrado.</p>}
+        </div>
+      </section>
 
       {loading ? (
         <div className="flex items-center justify-center h-40 text-gray-400 gap-2">

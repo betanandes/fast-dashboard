@@ -21,6 +21,16 @@ interface PaginaSults {
   size?: number;
 }
 
+export class ErroSults extends Error {
+  readonly status: number;
+
+  constructor(status: number, mensagem: string) {
+    super(mensagem);
+    this.name = "ErroSults";
+    this.status = status;
+  }
+}
+
 interface ResultadoChamados {
   data: unknown[];
   cache: boolean;
@@ -76,9 +86,12 @@ async function requisitarPagina(url: URL, headers: Record<string, string>, timeo
         await aguardar(Math.min(10_000, esperaServidor ?? esperaBase * 2 ** tentativa));
         continue;
       }
-      const corpo = (await resposta.json().catch(() => null)) as PaginaSults | null;
+      const corpo = (await resposta.json().catch(() => null)) as (PaginaSults & { message?: string; mensagem?: string; error?: string }) | null;
       if (resposta.status === 429) throw new Error("A SULTS limitou temporariamente as consultas. Aguarde alguns instantes antes de atualizar novamente.");
-      if (!resposta.ok) throw new Error(`SULTS retornou HTTP ${resposta.status}.`);
+      if (!resposta.ok) {
+        const detalhe = corpo?.message ?? corpo?.mensagem ?? corpo?.error;
+        throw new ErroSults(resposta.status, `SULTS retornou HTTP ${resposta.status}${detalhe ? `: ${detalhe}` : "."}`);
+      }
       return corpo;
     } finally {
       clearTimeout(timer);

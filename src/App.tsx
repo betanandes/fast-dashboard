@@ -14,7 +14,6 @@ import PrimeiroAcessoPage from "./pages/PrimeiroAcessoPage";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import LicencasPage from "./pages/LicencasPage";
 import SoftwaresPage from "./pages/SoftwaresPage";
-import MaquinasPage from "./pages/MaquinasPage";
 import PlantaoPage from "./pages/PlantaoPage";
 import ProvedoresPage from "./pages/ProvedoresPage";
 import ChamadosPage from "./pages/ChamadosPage";
@@ -47,7 +46,7 @@ export default function App() {
                 <Route path="/fornecedores" element={<FornecedoresPage />} />
                 <Route path="/licencas" element={<LicencasPage />} />
                 <Route path="/softwares" element={<SoftwaresPage />} />
-                <Route path="/maquinas" element={<MaquinasPage />} />
+                <Route path="/maquinas" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/plantao" element={<PlantaoPage />} />
                 <Route path="/provedores" element={<ProvedoresPage />} />
                 <Route path="/chamados" element={<ChamadosPage />} />

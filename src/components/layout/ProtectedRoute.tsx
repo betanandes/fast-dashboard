@@ -18,13 +18,18 @@ export default function ProtectedRoute() {
         return;
       }
 
-      const { data } = await (supabase.from("usuarios") as any)
+      const { data } = await supabase
+        .from("usuarios")
         .select("primeiro_acesso, role")
         .eq("id", user.id)
         .single();
+      const perfil = data as unknown as {
+        primeiro_acesso: boolean;
+        role: string;
+      } | null;
 
-      setPrimeiroAcesso(data?.primeiro_acesso === true);
-      setRole(data?.role ?? "visualizador");
+      setPrimeiroAcesso(perfil?.primeiro_acesso === true);
+      setRole(perfil?.role ?? "visualizador");
       setVerificando(false);
     }
     if (!loading) verificar();
@@ -44,7 +49,10 @@ export default function ProtectedRoute() {
     return <Navigate to="/primeiro-acesso" replace />;
   }
 
-  if (location.pathname === "/importar" && role !== "admin") {
+  if (
+    (location.pathname === "/importar" || location.pathname === "/usuarios") &&
+    role !== "admin"
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -18,6 +18,7 @@ import PlantaoPage from "./pages/PlantaoPage";
 import ProvedoresPage from "./pages/ProvedoresPage";
 import ChamadosPage from "./pages/ChamadosPage";
 import GamificacaoPage from "./pages/GamificacaoPage";
+import UsuariosPage from "./pages/UsuariosPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialog";
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="/provedores" element={<ProvedoresPage />} />
                 <Route path="/chamados" element={<ChamadosPage />} />
                 <Route path="/gamificacao" element={<GamificacaoPage />} />
+                <Route path="/usuarios" element={<UsuariosPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
                 <Route
                   path="/importar"

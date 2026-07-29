@@ -18,6 +18,9 @@ import {
   Sun,
   Tickets,
   Trophy,
+  ChevronDown,
+  SlidersHorizontal,
+  UsersRound,
 } from "lucide-react";
 import { useAuthContext } from "../../hooks/AuthContext";
 import { useSidebar } from "../../hooks/useSidebar";
@@ -36,7 +39,6 @@ const NAV = [
   { to: "/chamados", icon: Tickets, label: "Chamados TI" },
   { to: "/plantao", icon: CalendarDays, label: "Plantão" },
   { to: "/gamificacao", icon: Trophy, label: "Jornada TI" },
-  { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
 const ROTAS_TI = new Set([
@@ -57,6 +59,12 @@ export default function AppLayout() {
   const [perfil, setPerfil] = useState<{ nome: string; role: string } | null>(
     null,
   );
+  const administracaoAtiva = ["/configuracoes", "/usuarios"].includes(
+    location.pathname,
+  );
+  const [administracaoAberta, setAdministracaoAberta] =
+    useState(administracaoAtiva);
+  const administracaoExpandida = administracaoAberta || administracaoAtiva;
 
   useEffect(() => {
     if (!user) return;
@@ -173,6 +181,75 @@ export default function AppLayout() {
               )}
             </NavLink>
           ))}
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                if (collapsed) toggleSidebar();
+                setAdministracaoAberta((aberta) => !aberta);
+              }}
+              title={collapsed ? "Administração" : undefined}
+              aria-expanded={administracaoExpandida}
+              className={`
+                group relative flex min-h-10 w-full items-center gap-3 rounded-xl text-sm transition-all duration-150
+                ${collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}
+                ${
+                  administracaoAtiva
+                    ? "bg-gray-900 font-medium text-white dark:bg-gray-800"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                }
+              `}
+            >
+              <SlidersHorizontal
+                className={`h-[18px] w-[18px] shrink-0 ${
+                  administracaoAtiva ? "text-brand-400" : "text-gray-400 group-hover:text-gray-600"
+                }`}
+              />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Administração</span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      administracaoExpandida ? "rotate-180" : ""
+                    }`}
+                  />
+                </>
+              )}
+            </button>
+
+            {!collapsed && administracaoExpandida && (
+              <div className="relative ml-5 mt-1 space-y-1 border-l border-dashed border-gray-300 pl-3 dark:border-gray-700">
+                <NavLink
+                  to="/configuracoes"
+                  className={({ isActive }) =>
+                    `flex min-h-9 items-center gap-2.5 rounded-lg px-3 py-2 text-xs transition ${
+                      isActive
+                        ? "bg-brand-50 font-medium text-brand-700"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                    }`
+                  }
+                >
+                  <Settings className="h-4 w-4" />
+                  Configurações
+                </NavLink>
+                {isAdmin && (
+                  <NavLink
+                    to="/usuarios"
+                    className={({ isActive }) =>
+                      `flex min-h-9 items-center gap-2.5 rounded-lg px-3 py-2 text-xs transition ${
+                        isActive
+                          ? "bg-brand-50 font-medium text-brand-700"
+                          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                      }`
+                    }
+                  >
+                    <UsersRound className="h-4 w-4" />
+                    Usuários
+                  </NavLink>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Usuário */}

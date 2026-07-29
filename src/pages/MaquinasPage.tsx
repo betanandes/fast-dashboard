@@ -3,6 +3,7 @@ import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis
 import { CircleCheck, CircleOff, MonitorCog, Pencil, Plus, Search, Trash2, TriangleAlert, X } from "lucide-react";
 import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
 import CrudModal from "../components/ui/CrudModal";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useDataLayout } from "../hooks/useDataLayout";
 import { MAQUINAS, type MaquinaTI } from "../data/tiData";
 import { useThemeContext } from "../hooks/ThemeContext";
@@ -28,6 +29,7 @@ function Tabela({ dados }: { dados: MaquinaTI[] }) {
 }
 
 export default function MaquinasPage() {
+  const confirmar = useConfirmDialog();
   const { dark } = useThemeContext();
   const [layout, setLayout] = useDataLayout("maquinas", "list");
   const [registros, setRegistros] = useState<MaquinaRegistro[]>(() => MAQUINAS.map((item, index) => ({ ...item, id: `demo-maquina-${index}` })));
@@ -45,7 +47,14 @@ export default function MaquinasPage() {
 
   const novo = () => setEdicao({ id: "", maquina: "", serie: "", modelo: "", unidade: "", contato: "", cnpj: "", cidade: "", ip: "—", status: "Online", observacao: "" });
   const salvar = async () => { if (!edicao) return; if (![edicao.maquina, edicao.serie, edicao.modelo, edicao.unidade, edicao.cidade].every((valor) => valor.trim())) { setErroCrud("Preencha máquina, série, modelo, unidade e cidade."); return; } setSalvando(true); setErroCrud(""); try { setRegistros(await salvarMaquina(edicao)); setEdicao(null); } catch (erro) { setErroCrud(erro instanceof Error ? erro.message : "Erro ao salvar."); } finally { setSalvando(false); } };
-  const excluir = async (item: MaquinaRegistro) => { if (!window.confirm(`Excluir ${item.maquina}?`)) return; try { setRegistros(await excluirMaquina(item)); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao excluir."); } };
+  const excluir = async (item: MaquinaRegistro) => {
+    await confirmar({
+      titulo: "Excluir máquina?",
+      descricao: "O equipamento será removido do inventário.",
+      detalhe: `${item.maquina} • Série ${item.serie}`,
+      onConfirm: async () => setRegistros(await excluirMaquina(item)),
+    });
+  };
   return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Máquinas e unidades</h1><p className="page-subtitle">Inventário de impressoras e equipamentos das lojas.</p></div><div className="flex items-center gap-2"><button type="button" onClick={novo} className="btn-primary flex items-center gap-2 text-sm"><Plus className="h-4 w-4" /> Nova máquina</button><DataLayoutSwitcher value={layout} onChange={setLayout} /></div></div>
     <div className="card mb-5 p-4"><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6"><label className="relative sm:col-span-2"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input className="input pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar máquina, série, CNPJ, cidade, IP ou observação..." /></label><select className="input" value={modelo} onChange={(e) => setModelo(e.target.value)}><option>Todos</option>{MODELOS.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={unidade} onChange={(e) => setUnidade(e.target.value)}><option>Todos</option>{UNIDADES.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={status} onChange={(e) => setStatus(e.target.value)}><option>Todos</option><option>Online</option><option>Atenção</option><option>Offline</option></select><button type="button" onClick={limpar} className="btn-secondary flex w-full items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button></div></div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck2, CalendarDays, Clock3, Mail, Pencil, Phone, Plus, Search, Trash2, UserRoundCheck, UsersRound, X } from "lucide-react";
 import CrudModal from "../components/ui/CrudModal";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
 import { useDataLayout } from "../hooks/useDataLayout";
 import { excluirPlantao, listarPlantoes, materializarPlantoes, salvarPlantao } from "../services/plantao";
@@ -30,6 +31,7 @@ function Cards({ dados, hoje, proximo, onEdit, onDelete }: { dados: PlantaoTI[];
 }
 
 export default function PlantaoPage() {
+  const confirmar = useConfirmDialog();
   const demos = useMemo(() => gerarEscala(), []);
   const [layout, setLayout] = useDataLayout("plantao", "dashboard");
   const [plantoes, setPlantoes] = useState<PlantaoTI[]>(demos); const [origemDemo, setOrigemDemo] = useState(true);
@@ -43,7 +45,22 @@ export default function PlantaoPage() {
   const preparar = async () => { if (!origemDemo) return plantoes; const reais = await materializarPlantoes(plantoes); setPlantoes(reais); setOrigemDemo(false); return reais; };
   const editar = async (item: PlantaoTI) => { setErroCrud(""); try { const base = await preparar(); setEdicao(base.find((registro) => registro.data === item.data) ?? item); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao preparar a escala."); } };
   const salvar = async () => { if (!edicao) return; if (!edicao.data || !edicao.colaborador_nome.trim() || !edicao.colaborador_email.trim()) { setErroCrud("Preencha a data, o nome e o e-mail do colaborador."); return; } if (new Date(`${edicao.data}T12:00:00`).getDay() !== 6) { setErroCrud("A data do plantão precisa ser um sábado."); return; } setSalvando(true); setErroCrud(""); try { let item = edicao; if (origemDemo) { const base = await preparar(); if (edicao.id.startsWith("demo-")) item = base.find((registro) => registro.data === edicao.data) ?? edicao; } await salvarPlantao({ id: item.id, data: edicao.data, colaborador_nome: edicao.colaborador_nome.trim(), colaborador_email: edicao.colaborador_email.trim(), telefone: edicao.telefone?.trim() || null, observacao: edicao.observacao?.trim() || null }); setPlantoes(await listarPlantoes()); setOrigemDemo(false); setEdicao(null); } catch (erro) { setErroCrud(erro instanceof Error ? erro.message : "Não foi possível salvar o plantão."); } finally { setSalvando(false); } };
-  const excluir = async (item: PlantaoTI) => { if (!window.confirm(`Excluir o plantão de ${item.colaborador_nome} em ${new Date(`${item.data}T12:00:00`).toLocaleDateString("pt-BR")}?`)) return; try { const base = await preparar(); const real = base.find((registro) => registro.data === item.data); if (!real) throw new Error("Plantão não encontrado."); await excluirPlantao(real.id); setPlantoes(await listarPlantoes()); setOrigemDemo(false); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao excluir."); } };
+  const excluir = async (item: PlantaoTI) => {
+    const data = new Date(`${item.data}T12:00:00`).toLocaleDateString("pt-BR");
+    await confirmar({
+      titulo: "Excluir plantão?",
+      descricao: "Essa ação remove o registro da escala e não poderá ser desfeita.",
+      detalhe: `${item.colaborador_nome} • ${data}`,
+      onConfirm: async () => {
+        const base = await preparar();
+        const real = base.find((registro) => registro.data === item.data);
+        if (!real) throw new Error("Plantão não encontrado.");
+        await excluirPlantao(real.id);
+        setPlantoes(await listarPlantoes());
+        setOrigemDemo(false);
+      },
+    });
+  };
   const pessoas = new Set(dados.map((item) => item.colaborador_email)).size;
 
   return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Plantão de sábado</h1><p className="page-subtitle">Visualize quem estará disponível e acompanhe a escala semanal.</p></div><div className="flex flex-wrap items-center gap-2">{origemDemo && <span className="badge badge-warn">Escala demonstrativa</span>}<button type="button" onClick={abrirNovo} className="btn-primary flex items-center gap-2 text-sm"><Plus className="h-4 w-4" /> Novo plantão</button><DataLayoutSwitcher value={layout} onChange={setLayout} /></div></div>

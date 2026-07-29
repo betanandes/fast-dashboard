@@ -17,6 +17,7 @@ import {
 import type { Pagamento } from "../types/database";
 import { excluirFornecedor, listarFornecedores, salvarFornecedor, type Fornecedor } from "../services/fornecedores";
 import FornecedorActions from "../components/fornecedores/FornecedorActions";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
 function fmtMoeda(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -40,6 +41,7 @@ interface FornecedorDetalhe {
 const POR_PAGINA = 10;
 
 export default function FornecedoresPage() {
+  const confirmar = useConfirmDialog();
   const [cadastros, setCadastros] = useState<Fornecedor[]>([]);
   const [form, setForm] = useState<(Omit<Fornecedor, "id"> & { id?: string }) | null>(null);
   const [erroCadastro, setErroCadastro] = useState("");
@@ -100,13 +102,15 @@ export default function FornecedoresPage() {
     }
   };
   const removerFornecedor = async (item: Fornecedor) => {
-    if (!window.confirm(`Excluir o fornecedor ${item.nome_fantasia}?`)) return;
-    try {
-      await excluirFornecedor(item.id);
-      setCadastros(await listarFornecedores());
-    } catch (erro) {
-      setErroCadastro(erro instanceof Error ? erro.message : "O fornecedor possui vínculos e não pode ser excluído.");
-    }
+    await confirmar({
+      titulo: "Excluir fornecedor?",
+      descricao: "O cadastro será removido. Fornecedores vinculados a pagamentos ou provedores não podem ser excluídos.",
+      detalhe: item.nome_fantasia,
+      onConfirm: async () => {
+        await excluirFornecedor(item.id);
+        setCadastros(await listarFornecedores());
+      },
+    });
   };
 
   async function verDetalhe(fornecedor: string) {

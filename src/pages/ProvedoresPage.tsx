@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, Pencil, Plus, Router, Search, ShieldCheck, Trash2, Wifi, WifiOff, X } from "lucide-react";
 import CrudModal from "../components/ui/CrudModal";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
 import { PROVEDORES, type ProvedorTI } from "../data/tiData";
 import { useDataLayout } from "../hooks/useDataLayout";
@@ -28,6 +29,7 @@ function Lista({ dados, onEdit, onDelete }: { dados: ProvedorRegistro[]; onEdit:
 }
 
 export default function ProvedoresPage() {
+  const confirmar = useConfirmDialog();
   const [layout, setLayout] = useDataLayout("provedores", "cards");
   const [registros, setRegistros] = useState<ProvedorRegistro[]>(() => PROVEDORES.map((item, index) => ({ ...item, id: `demo-provedor-${index}` })));
   const [busca, setBusca] = useState(""); const [provedor, setProvedor] = useState("Todos"); const [uf, setUf] = useState("Todos"); const [status, setStatus] = useState("Todos");
@@ -41,7 +43,14 @@ export default function ProvedoresPage() {
   const limpar = () => { setBusca(""); setProvedor("Todos"); setUf("Todos"); setStatus("Todos"); };
   const novo = () => setEdicao({ id: "", loja: "", cidade: "", uf: "RJ", provedorPrincipal: "", provedorBackup: "", velocidade: "", tecnologia: "Fibra", status: "Operacional", telefoneSuporte: "", vencimentoContrato: "" });
   const salvar = async () => { if (!edicao) return; if (![edicao.loja, edicao.cidade, edicao.uf, edicao.provedorPrincipal, edicao.velocidade].every((valor) => valor.trim())) { setErroCrud("Preencha os campos obrigatórios."); return; } setSalvando(true); setErroCrud(""); try { setRegistros(await salvarProvedor(edicao)); setEdicao(null); } catch (erro) { setErroCrud(erro instanceof Error ? erro.message : "Erro ao salvar."); } finally { setSalvando(false); } };
-  const excluir = async (item: ProvedorRegistro) => { if (!window.confirm(`Excluir o provedor da loja ${item.loja}?`)) return; try { setRegistros(await excluirProvedor(item)); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao excluir."); } };
+  const excluir = async (item: ProvedorRegistro) => {
+    await confirmar({
+      titulo: "Excluir provedor?",
+      descricao: "O link de internet será removido do cadastro desta loja.",
+      detalhe: `${item.loja} • ${item.provedorPrincipal}`,
+      onConfirm: async () => setRegistros(await excluirProvedor(item)),
+    });
+  };
   const porProvedor = provedores.map((nome) => ({ nome, total: dados.filter((item) => item.provedorPrincipal === nome).length })).filter((item) => item.total).sort((a, b) => b.total - a.total);
   const maximo = Math.max(...porProvedor.map((item) => item.total), 1);
 

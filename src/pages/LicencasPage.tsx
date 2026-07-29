@@ -3,6 +3,7 @@ import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis
 import { BadgeCheck, CircleDollarSign, Pencil, Plus, Search, ShieldCheck, Trash2, UsersRound, X } from "lucide-react";
 import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
 import CrudModal from "../components/ui/CrudModal";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useDataLayout } from "../hooks/useDataLayout";
 import { LICENCAS, type LicencaTI } from "../data/tiData";
 import { useThemeContext } from "../hooks/ThemeContext";
@@ -30,6 +31,7 @@ function Lista({ dados, onEdit, onDelete }: { dados: LicencaRegistro[]; onEdit: 
 }
 
 export default function LicencasPage() {
+  const confirmar = useConfirmDialog();
   const { dark } = useThemeContext();
   const [layout, setLayout] = useDataLayout("licencas", "dashboard");
   const [registros, setRegistros] = useState<LicencaRegistro[]>(() => LICENCAS.map((item, index) => ({ ...item, id: `demo-licenca-${index}` })));
@@ -47,7 +49,14 @@ export default function LicencasPage() {
 
   const novo = () => setEdicao({ id: "", colaborador: "", departamento: "", codigoSap: "", appControl: "", perfil: "Limitada", crm: false, logistica: false, financeiro: false, status: "Ativo" });
   const salvar = async () => { if (!edicao) return; if (![edicao.colaborador, edicao.departamento, edicao.codigoSap, edicao.appControl].every((valor) => valor.trim())) { setErroCrud("Preencha os campos obrigatórios."); return; } setSalvando(true); setErroCrud(""); try { setRegistros(await salvarLicenca(edicao)); setEdicao(null); } catch (erro) { setErroCrud(erro instanceof Error ? erro.message : "Erro ao salvar."); } finally { setSalvando(false); } };
-  const excluir = async (item: LicencaRegistro) => { if (!window.confirm(`Excluir a licença de ${item.colaborador}?`)) return; try { setRegistros(await excluirLicenca(item)); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao excluir."); } };
+  const excluir = async (item: LicencaRegistro) => {
+    await confirmar({
+      titulo: "Excluir licença?",
+      descricao: "O acesso será removido da lista de licenças e módulos.",
+      detalhe: `${item.colaborador} • ${item.appControl}`,
+      onConfirm: async () => setRegistros(await excluirLicenca(item)),
+    });
+  };
   return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Licenças e acessos</h1><p className="page-subtitle">Usuários, perfis e módulos do sistema.</p></div><div className="flex items-center gap-2"><button type="button" onClick={novo} className="btn-primary flex items-center gap-2 text-sm"><Plus className="h-4 w-4" /> Nova licença</button><DataLayoutSwitcher value={layout} onChange={setLayout} /></div></div>
     <div className="card mb-5 p-4"><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6"><label className="relative sm:col-span-2"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={busca} onChange={(e) => setBusca(e.target.value)} className="input pl-9" placeholder="Buscar por nome, código, departamento ou módulo..." /></label><select className="input" value={departamento} onChange={(e) => setDepartamento(e.target.value)}><option>Todos</option>{DEPARTAMENTOS.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={perfil} onChange={(e) => setPerfil(e.target.value)}><option>Todos</option><option>Profissional</option><option>Limitada</option></select><select className="input" value={status} onChange={(e) => setStatus(e.target.value)}><option>Todos</option><option>Ativo</option><option>Pendente</option><option>Inativo</option></select><button type="button" onClick={limpar} className="btn-secondary flex w-full items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button></div></div>
 

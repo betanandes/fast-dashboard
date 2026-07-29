@@ -20,6 +20,7 @@ import ChamadosPage from "./pages/ChamadosPage";
 import GamificacaoPage from "./pages/GamificacaoPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import { ConfirmDialogProvider } from "./components/ui/ConfirmDialog";
 
 export default function App() {
   const auth = useAuth();
@@ -28,7 +29,8 @@ export default function App() {
   return (
     <ThemeContext.Provider value={theme}>
       <AuthContext.Provider value={auth}>
-        <BrowserRouter>
+        <ConfirmDialogProvider>
+          <BrowserRouter>
           <Routes>
             {/* Públicas */}
             <Route path="/login" element={<LoginPage />} />
@@ -69,7 +71,8 @@ export default function App() {
 
           {/* Painel de acessibilidade flutuante */}
           <A11yPanel />
-        </BrowserRouter>
+          </BrowserRouter>
+        </ConfirmDialogProvider>
       </AuthContext.Provider>
     </ThemeContext.Provider>
   );

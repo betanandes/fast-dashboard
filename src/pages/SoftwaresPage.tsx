@@ -3,6 +3,7 @@ import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis
 import { ArrowUpRight, BadgeCheck, CircleDollarSign, Pencil, Plus, Search, Shapes, Trash2, X } from "lucide-react";
 import DataLayoutSwitcher from "../components/ui/DataLayoutSwitcher";
 import CrudModal from "../components/ui/CrudModal";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useDataLayout } from "../hooks/useDataLayout";
 import { SOFTWARES, type SoftwareTI } from "../data/tiData";
 import { useThemeContext } from "../hooks/ThemeContext";
@@ -32,6 +33,7 @@ function Lista({ dados }: { dados: SoftwareRegistro[] }) {
 }
 
 export default function SoftwaresPage() {
+  const confirmar = useConfirmDialog();
   const { dark } = useThemeContext();
   const [layout, setLayout] = useDataLayout("softwares", "cards");
   const [registros, setRegistros] = useState<SoftwareRegistro[]>(() => SOFTWARES.map((item, index) => ({ ...item, id: `demo-software-${index}` })));
@@ -49,7 +51,14 @@ export default function SoftwaresPage() {
 
   const novo = () => setEdicao({ id: "", nome: "", aplicacao: "", acesso: "", valorMensal: 0, valorAnual: 0, satisfaz: "Em análise", link: "", responsavel: "" });
   const salvar = async () => { if (!edicao) return; if (![edicao.nome, edicao.aplicacao, edicao.responsavel].every((valor) => valor.trim())) { setErroCrud("Preencha nome, aplicação e responsável."); return; } setSalvando(true); setErroCrud(""); try { setRegistros(await salvarSoftware(edicao)); setEdicao(null); } catch (erro) { setErroCrud(erro instanceof Error ? erro.message : "Erro ao salvar."); } finally { setSalvando(false); } };
-  const excluir = async (item: SoftwareRegistro) => { if (!window.confirm(`Excluir ${item.nome}?`)) return; try { setRegistros(await excluirSoftware(item)); } catch (erro) { window.alert(erro instanceof Error ? erro.message : "Erro ao excluir."); } };
+  const excluir = async (item: SoftwareRegistro) => {
+    await confirmar({
+      titulo: "Excluir software?",
+      descricao: "O software e suas informações de custo serão removidos.",
+      detalhe: `${item.nome} • ${item.responsavel}`,
+      onConfirm: async () => setRegistros(await excluirSoftware(item)),
+    });
+  };
   return <div className="page"><div className="page-header gap-4"><div><h1 className="page-title">Softwares e contratos</h1><p className="page-subtitle">Ferramentas, acessos, responsáveis e custos.</p></div><div className="flex items-center gap-2"><button type="button" onClick={novo} className="btn-primary flex items-center gap-2 text-sm"><Plus className="h-4 w-4" /> Novo software</button><DataLayoutSwitcher value={layout} onChange={setLayout} /></div></div>
     <div className="card mb-5 p-4"><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6"><label className="relative sm:col-span-2"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input className="input pl-9" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar software, aplicação, acesso ou responsável..." /></label><select className="input" value={satisfacao} onChange={(e) => setSatisfacao(e.target.value)}><option>Todos</option><option>Sim</option><option>Em análise</option><option>Não</option></select><select className="input" value={responsavel} onChange={(e) => setResponsavel(e.target.value)}><option>Todos</option>{RESPONSAVEIS.map((item) => <option key={item}>{item}</option>)}</select><select className="input" value={faixa} onChange={(e) => setFaixa(e.target.value)}><option>Todos</option><option>Até R$ 500</option><option>R$ 501 a R$ 2.000</option><option>Acima de R$ 2.000</option></select><button type="button" onClick={limpar} className="btn-secondary flex w-full items-center justify-center gap-2"><X className="h-4 w-4" /> Limpar</button></div></div>
 
